@@ -108,7 +108,7 @@ class AdminLoginScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: const [
                       Text(
-                        'Admin Panel',
+                        'Adminssssssssssssssssss Panel',
                         style: TextStyle(fontSize: 28, color: Colors.white),
                       ),
                       SizedBox(height: 10),
