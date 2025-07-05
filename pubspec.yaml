@@ -1,0 +1,23 @@
+name: softd
+description: A new Flutter project.
+
+publish_to: 'none' # Remove if you plan to publish
+
+version: 1.0.0+1
+
+environment:
+  sdk: '^3.8.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/UC_Official_Seal.png
