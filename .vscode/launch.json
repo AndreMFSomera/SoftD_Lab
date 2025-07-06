@@ -7,19 +7,22 @@
         {
             "name": "softd",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+ 
         },
         {
             "name": "softd (profile mode)",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "profile"
+            "flutterMode": "profile",
+
         },
         {
             "name": "softd (release mode)",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "release"
+            "flutterMode": "release",
+
         }
     ]
 }

@@ -1,29 +1,12 @@
 import 'package:flutter/material.dart';
-import 'admin_login.dart';
-import 'checker_signup.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+class SignupPage extends StatelessWidget {
+  SignupPage({super.key});
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Faculty Login',
-      home: LoginPage(),
-      debugShowCheckedModeBanner: false,
-    );
-  }
-}
-
-class LoginPage extends StatelessWidget {
-  LoginPage({super.key});
-
+  final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +15,7 @@ class LoginPage extends StatelessWidget {
         children: [
           Row(
             children: [
-              // Left section
+              // Signup form (left side)
               Expanded(
                 flex: 2,
                 child: Padding(
@@ -41,27 +24,35 @@ class LoginPage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text(
-                        'Login to Your Faculty Account',
-                        style: TextStyle(
-                          fontSize: 50,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.left,
+                        'Sign Up for a Faculty Account',
+                        style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: 300,
+                        child: TextField(
+                          controller: nameController,
+                          decoration: InputDecoration(
+                            hintText: 'Full Name',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
                       SizedBox(
                         width: 300,
                         child: TextField(
                           controller: emailController,
                           decoration: InputDecoration(
-                            hintText: 'Faculty Email or Faculty ID Number',
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 15,
-                              horizontal: 20,
-                            ),
+                            hintText: 'Faculty Email or ID',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
+                            contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
                           ),
                         ),
                       ),
@@ -73,17 +64,29 @@ class LoginPage extends StatelessWidget {
                           obscureText: true,
                           decoration: InputDecoration(
                             hintText: 'Password',
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 15,
-                              horizontal: 20,
-                            ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
+                            contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
                           ),
                         ),
                       ),
                       const SizedBox(height: 10),
+                      SizedBox(
+                        width: 300,
+                        child: TextField(
+                          controller: confirmPasswordController,
+                          obscureText: true,
+                          decoration: InputDecoration(
+                            hintText: 'Confirm Password',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
                       SizedBox(
                         width: 300,
                         child: ElevatedButton(
@@ -94,33 +97,24 @@ class LoginPage extends StatelessWidget {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 15),
                           ),
-                          onPressed: () {},
-                          child: const Text(
-                            'Log in',
-                            style: TextStyle(fontSize: 18),
-                          ),
+                          onPressed: () {
+                            // TODO: Implement signup logic
+                          },
+                          child: const Text('Sign Up', style: TextStyle(fontSize: 18)),
                         ),
                       ),
                       const SizedBox(height: 10),
                       TextButton(
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => AdminLoginScreen(),
-                            ),
-                          );
+                          Navigator.pop(context); // Go back to login page
                         },
-                        child: const Text(
-                          'Administrator Login',
-                          style: TextStyle(color: Colors.blue),
-                        ),
+                        child: const Text('Already have an account? Log in', style: TextStyle(color: Colors.blue)),
                       ),
                     ],
                   ),
                 ),
               ),
-              // Right section
+              // Right side panel
               Expanded(
                 flex: 1,
                 child: Container(
@@ -128,39 +122,16 @@ class LoginPage extends StatelessWidget {
                   padding: const EdgeInsets.all(30),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'New Here?',
+                    children: const [
+                      Text(
+                        'Faculty Registration',
                         style: TextStyle(fontSize: 28, color: Colors.white),
                       ),
-                      const SizedBox(height: 10),
-                      const Text(
-                        'Sign up now to get notified and find out if they approve your request!',
+                      SizedBox(height: 10),
+                      Text(
+                        'Fill out your details to request a faculty account.',
                         style: TextStyle(fontSize: 16, color: Colors.white),
                         textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 20),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 30,
-                            vertical: 10,
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => SignupPage()),
-                          );
-                        },
-                        child: const Text(
-                          'Sign up',
-                          style: TextStyle(color: Colors.black),
-                        ),
                       ),
                     ],
                   ),
@@ -168,12 +139,11 @@ class LoginPage extends StatelessWidget {
               ),
             ],
           ),
-          // Logo and text
+          // Logo and system name
           Positioned(
             top: 20,
             left: 20,
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Image.asset('assets/UC_Official_Seal.png', height: 100),
                 const SizedBox(width: 10),
