@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'main.dart';
+import 'admin_dashboard.dart';
 
 class AdminLoginScreen extends StatelessWidget {
   AdminLoginScreen({super.key});
@@ -75,7 +76,14 @@ class AdminLoginScreen extends StatelessWidget {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 15),
                           ),
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AdminDashboard(),
+                              ),
+                            );
+                          },
                           child: const Text(
                             'Log in',
                             style: TextStyle(fontSize: 18),
@@ -108,7 +116,7 @@ class AdminLoginScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: const [
                       Text(
-                        'Adminssssssssssssssssss Panel',
+                        'Admin Panel',
                         style: TextStyle(fontSize: 28, color: Colors.white),
                       ),
                       SizedBox(height: 10),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:softd/checker_dashboard.dart';
 import 'admin_login.dart';
 import 'checker_signup.dart';
 
@@ -94,7 +95,14 @@ class LoginPage extends StatelessWidget {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 15),
                           ),
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CheckerDashboard(),
+                              ),
+                            );
+                          },
                           child: const Text(
                             'Log in',
                             style: TextStyle(fontSize: 18),
@@ -154,7 +162,9 @@ class LoginPage extends StatelessWidget {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => SignupPage()),
+                            MaterialPageRoute(
+                              builder: (context) => SignupPage(),
+                            ),
                           );
                         },
                         child: const Text(
