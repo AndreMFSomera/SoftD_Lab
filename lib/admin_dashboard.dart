@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'add_instructor_page.dart';
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
@@ -13,7 +14,7 @@ class AdminDashboard extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
-              // Add logout logic
+              // TODO: Add logout logic
             },
           ),
         ],
@@ -39,17 +40,27 @@ class AdminDashboard extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.person, color: Colors.green),
               title: const Text("Manage Instructors"),
-              onTap: () {},
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AddInstructorPage()),
+                );
+              },
             ),
             ListTile(
               leading: const Icon(Icons.check, color: Colors.green),
               title: const Text("Manage Checkers"),
-              onTap: () {},
+              onTap: () {
+                // TODO: Add checker management logic
+              },
             ),
             ListTile(
               leading: const Icon(Icons.bar_chart, color: Colors.green),
               title: const Text("Reports"),
-              onTap: () {},
+              onTap: () {
+                // TODO: Add report viewing logic
+              },
             ),
           ],
         ),
