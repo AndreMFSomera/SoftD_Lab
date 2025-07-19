@@ -11,6 +11,7 @@ class CheckerDashboard extends StatefulWidget {
 class _CheckerDashboardState extends State<CheckerDashboard> {
   int _selectedIndex = 0;
 
+  final _formKey = GlobalKey<FormState>();
   final professorNameController = TextEditingController();
   final roomController = TextEditingController();
   String? attendanceStatus;
@@ -27,8 +28,7 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
   void _saveAttendance() {
     if (_formKey.currentState!.validate() && attendanceStatus != null) {
       final dateStr = "${now.toLocal().toString().split(' ')[0]}";
-      final timeStr =
-          now.toLocal().toString().split(' ')[1].split('.').first;
+      final timeStr = now.toLocal().toString().split(' ')[1].split('.').first;
 
       setState(() {
         _attendanceRecords.add({
@@ -44,48 +44,19 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
         attendanceStatus = null;
       });
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Attendance saved!")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Attendance saved!")),
+      );
     } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Please complete the form")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please complete the form")),
+      );
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final dateStr = "${now.toLocal().toString().split(' ')[0]}";
-    final timeStr = "${now.toLocal().toString().split(' ')[1].split('.').first}";
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Checker Dashboard"),
-        backgroundColor: Colors.green[700],
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const MyApp()),
-                (route) => false,
-              );
-            },
-            child: const Text("Logout"),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildAttendanceForm() {
     final dateStr = "${now.toLocal().toString().split(' ')[0]}";
-    final timeStr =
-        "${now.toLocal().toString().split(' ')[1].split('.').first}";
+    final timeStr = "${now.toLocal().toString().split(' ')[1].split('.').first}";
 
     return Center(
       child: Container(
@@ -103,98 +74,107 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
             ),
           ],
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              "Class Attendance",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.green,
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Class Attendance",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            TextFormField(
-              controller: professorNameController,
-              decoration: const InputDecoration(
-                labelText: "Professor Name",
-                border: OutlineInputBorder(),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: professorNameController,
+                decoration: const InputDecoration(
+                  labelText: "Professor Name",
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Required' : null,
               ),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: roomController,
-              decoration: const InputDecoration(
-                labelText: "Room",
-                border: OutlineInputBorder(),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: roomController,
+                decoration: const InputDecoration(
+                  labelText: "Room",
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Required' : null,
               ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    readOnly: true,
-                    controller: TextEditingController(text: dateStr),
-                    decoration: const InputDecoration(
-                      labelText: "Date",
-                      border: OutlineInputBorder(),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      readOnly: true,
+                      controller: TextEditingController(text: dateStr),
+                      decoration: const InputDecoration(
+                        labelText: "Date",
+                        border: OutlineInputBorder(),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          readOnly: true,
-                          controller: TextEditingController(text: timeStr),
-                          decoration: const InputDecoration(
-                            labelText: "Time",
-                            border: OutlineInputBorder(),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            readOnly: true,
+                            controller: TextEditingController(text: timeStr),
+                            decoration: const InputDecoration(
+                              labelText: "Time",
+                              border: OutlineInputBorder(),
+                            ),
                           ),
                         ),
-                      ),
-                      IconButton(
-                        onPressed: _refreshTime,
-                        icon: const Icon(Icons.refresh, color: Colors.green),
-                      ),
-                    ],
+                        IconButton(
+                          onPressed: _refreshTime,
+                          icon: const Icon(Icons.refresh, color: Colors.green),
+                        ),
+                      ],
+                    ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: attendanceStatus,
+                items: const [
+                  DropdownMenuItem(value: "Present", child: Text("Present")),
+                  DropdownMenuItem(value: "Absent", child: Text("Absent")),
+                  DropdownMenuItem(value: "ODL", child: Text("ODL")),
+                ],
+                decoration: const InputDecoration(
+                  labelText: "Attendance Status",
+                  border: OutlineInputBorder(),
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              value: attendanceStatus,
-              items: const [
-                DropdownMenuItem(value: "Present", child: Text("Present")),
-                DropdownMenuItem(value: "Absent", child: Text("Absent")),
-                DropdownMenuItem(value: "ODL", child: Text("ODL")),
-              ],
-              decoration: const InputDecoration(
-                labelText: "Attendance Status",
-                border: OutlineInputBorder(),
+                onChanged: (value) {
+                  setState(() {
+                    attendanceStatus = value;
+                  });
+                },
+                validator: (value) =>
+                    value == null ? 'Please select a status' : null,
               ),
-              onChanged: (value) {
-                setState(() {
-                  attendanceStatus = value;
-                });
-              },
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _saveAttendance,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 50),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _saveAttendance,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 50),
+                ),
+                child: const Text("Save Attendance"),
               ),
-              child: const Text("Save Attendance"),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -257,11 +237,36 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
     }
   }
 
+  void _confirmLogout() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Logout"),
+        content: const Text("Are you sure you want to logout?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const MyApp()),
+                (route) => false,
+              );
+            },
+            child: const Text("Logout"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false, // Removes back button
+        automaticallyImplyLeading: false,
         title: const Text("Checker Dashboard"),
         backgroundColor: Colors.green[700],
         actions: [

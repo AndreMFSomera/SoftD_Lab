@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'api_service.dart';
 
 class SignupPage extends StatelessWidget {
   SignupPage({super.key});
@@ -97,9 +98,54 @@ class SignupPage extends StatelessWidget {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 15),
                           ),
-                          onPressed: () {
-                            // TODO: Implement signup logic
-                          },
+                          onPressed: () async{
+                            final name = nameController.text.trim();
+                            final emailOrId = emailController.text.trim();
+                            final password = passwordController.text.trim();
+                            final confirmPassword = confirmPasswordController.text.trim();
+
+                            if (password != confirmPassword) {
+                              showDialog(
+                                context: context,
+                                builder: (_) => AlertDialog(
+                                   title: Text('Error'),
+                                   content: Text('Passwords do not match'),
+                                   actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text('OK'))],
+                                ),
+                              );
+                              return;
+                          }
+
+                          final success = await ApiService.signup(name, emailOrId, password);
+
+                           if (success) {
+                            showDialog(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                title: Text('Success'),
+                                content: Text('Account created successfully. You can now log in.'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context); // Close dialog
+                                      Navigator.pop(context); // Go back to login screen
+                                    },
+                                    child: Text('OK'),
+                                  ),
+                                ],
+                              ),
+                            );
+                           }else {
+                            showDialog(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                title: Text('Error'),
+                                content: Text('Signup failed. Email/ID might already exist.'),
+                                actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text('OK'))],
+                              ),
+                            );
+                           }
+                          },                                                                                                             
                           child: const Text('Sign Up', style: TextStyle(fontSize: 18)),
                         ),
                       ),
