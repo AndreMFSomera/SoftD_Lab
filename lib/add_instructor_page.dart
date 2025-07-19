@@ -74,7 +74,7 @@ class _AddInstructorPageState extends State<AddInstructorPage> {
         scrollDirection: Axis.horizontal,
         child: DataTable(
           headingRowColor:
-              MaterialStateColor.resolveWith((states) => Colors.green.shade100),
+              WidgetStateColor.resolveWith((states) => Colors.green.shade100),
           columns: const [
             DataColumn(label: Text("Full Name")),
             DataColumn(label: Text("ID Number")),

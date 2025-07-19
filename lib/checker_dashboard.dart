@@ -25,9 +25,9 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
 
   void _saveAttendance() {
     if (_formKey.currentState!.validate() && attendanceStatus != null) {
-      final dateStr = "${now.toLocal().toString().split(' ')[0]}";
+      final dateStr = now.toLocal().toString().split(' ')[0];
       final timeStr =
-          "${now.toLocal().toString().split(' ')[1].split('.').first}";
+          now.toLocal().toString().split(' ')[1].split('.').first;
 
       setState(() {
         _attendanceRecords.add({
@@ -55,8 +55,8 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    final dateStr = "${now.toLocal().toString().split(' ')[0]}";
-    final timeStr = "${now.toLocal().toString().split(' ')[1].split('.').first}";
+    final dateStr = now.toLocal().toString().split(' ')[0];
+    final timeStr = now.toLocal().toString().split(' ')[1].split('.').first;
 
     return Scaffold(
       appBar: AppBar(

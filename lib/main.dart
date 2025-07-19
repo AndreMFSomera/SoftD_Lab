@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:softd/checker_dashboard.dart';
 import 'admin_login.dart';
 import 'checker_signup.dart';
+import 'api_service.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -95,13 +97,35 @@ class LoginPage extends StatelessWidget {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 15),
                           ),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => CheckerDashboard(),
+                          onPressed: () async{
+                            print('Attempting login...');
+                            final success = await ApiService.login(
+                              emailController.text.trim(),
+                              passwordController.text.trim(),
+                            );
+                            print('Login success: $success');
+                            if (success) {
+                               Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                   builder: (context) => CheckerDashboard(),
+                                ),
+                               );
+                            }else {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: Text('Login Failed'),
+                                   content: Text('Invalid ID or password.'),
+                                    actions: [
+                                      TextButton(
+                                         onPressed: () => Navigator.pop(context),
+                                         child: Text('OK'),
+                                      ),
+                                    ],
                               ),
                             );
+                            }
                           },
                           child: const Text(
                             'Log in',
