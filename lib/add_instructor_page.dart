@@ -52,15 +52,13 @@ class _AddInstructorPageState extends State<AddInstructorPage> {
       _instructors.removeAt(index);
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Instructor removed.")),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text("Instructor removed.")));
   }
 
-  InputDecoration _inputDecoration(String label) => InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-      );
+  InputDecoration _inputDecoration(String label) =>
+      InputDecoration(labelText: label, border: const OutlineInputBorder());
 
   Widget _buildInstructorTable() {
     return Container(
@@ -74,7 +72,7 @@ class _AddInstructorPageState extends State<AddInstructorPage> {
         scrollDirection: Axis.horizontal,
         child: DataTable(
           headingRowColor:
-              WidgetStateColor.resolveWith((states) => Colors.green.shade100),
+              MaterialStateColor.resolveWith((states) => Colors.green.shade100),
           columns: const [
             DataColumn(label: Text("Full Name")),
             DataColumn(label: Text("ID Number")),
@@ -86,21 +84,23 @@ class _AddInstructorPageState extends State<AddInstructorPage> {
           ],
           rows: List.generate(_instructors.length, (index) {
             final instructor = _instructors[index];
-            return DataRow(cells: [
-              DataCell(Text(instructor['name']!)),
-              DataCell(Text(instructor['id']!)),
-              DataCell(Text(instructor['email']!)),
-              DataCell(Text(instructor['department']!)),
-              DataCell(Text(instructor['designation']!)),
-              DataCell(Text(instructor['contact']!)),
-              DataCell(
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  tooltip: "Remove",
-                  onPressed: () => _removeInstructor(index),
+            return DataRow(
+              cells: [
+                DataCell(Text(instructor['name']!)),
+                DataCell(Text(instructor['id']!)),
+                DataCell(Text(instructor['email']!)),
+                DataCell(Text(instructor['department']!)),
+                DataCell(Text(instructor['designation']!)),
+                DataCell(Text(instructor['contact']!)),
+                DataCell(
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    tooltip: "Remove",
+                    onPressed: () => _removeInstructor(index),
+                  ),
                 ),
-              ),
-            ]);
+              ],
+            );
           }),
         ),
       ),
