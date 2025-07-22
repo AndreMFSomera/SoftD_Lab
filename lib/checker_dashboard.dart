@@ -27,7 +27,7 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
 
   void _saveAttendance() {
     if (_formKey.currentState!.validate() && attendanceStatus != null) {
-      final dateStr = "${now.toLocal().toString().split(' ')[0]}";
+      final dateStr = now.toLocal().toString().split(' ')[0];
       final timeStr = now.toLocal().toString().split(' ')[1].split('.').first;
 
       setState(() {
@@ -44,19 +44,19 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
         attendanceStatus = null;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Attendance saved!")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Attendance saved!")));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please complete the form")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please complete the form")));
     }
   }
 
   Widget _buildAttendanceForm() {
-    final dateStr = "${now.toLocal().toString().split(' ')[0]}";
-    final timeStr = "${now.toLocal().toString().split(' ')[1].split('.').first}";
+    final dateStr = now.toLocal().toString().split(' ')[0];
+    final timeStr = now.toLocal().toString().split(' ')[1].split('.').first;
 
     return Center(
       child: Container(
