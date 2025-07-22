@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:softd/checker_dashboard.dart';
 import 'main.dart';
 import 'admin_dashboard.dart';
 
@@ -80,7 +81,7 @@ class AdminLoginScreen extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => AdminDashboard(),
+                                builder: (context) => CheckerDashboard(),
                               ),
                             );
                           },

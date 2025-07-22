@@ -14,8 +14,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   final List<String> _titles = [
     'Admin - Dashboard',
     'Admin - Instructors',
-    'Admin - Checkers',
-    'Admin - Reports',
+    'Admin - Manage',
   ];
 
   void _onNavTap(int index) {
@@ -40,41 +39,47 @@ class _AdminDashboardState extends State<AdminDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.green[700],
-        title: Text(_titles[_selectedIndex]),
-        leading: const Icon(Icons.arrow_back),
+        title: Text(
+          _titles[_selectedIndex],
+          style: const TextStyle(fontFamily: 'Arial'),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () {
-              // TODO: Add logout logic
-            },
+            onPressed: () => _showLogoutConfirmation(context),
           ),
         ],
       ),
       body: Row(
         children: [
-          // Left Navigation – placed below the AppBar now
+          // Sidebar
           Container(
             width: 200,
             color: Colors.green[800],
             child: Column(
               children: [
-                const SizedBox(height: 20), // spacing under AppBar
+                const SizedBox(height: 30),
                 _buildNavItem(Icons.dashboard, "Dashboard", 0),
                 _buildNavItem(Icons.person, "Instructors", 1),
-                _buildNavItem(Icons.check, "Checkers", 2),
-                _buildNavItem(Icons.bar_chart, "Reports", 3),
+                _buildNavItem(Icons.check, "Manage", 2),
               ],
             ),
           ),
 
           // Main content
           Expanded(
-            child: _selectedIndex == 0
-                ? _buildDashboardContent()
-                : _buildPlaceholder(),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: _selectedIndex == 0
+                  ? _buildDashboardContent()
+                  : _selectedIndex == 2
+                  ? _buildCheckerPanel()
+                  : _buildPlaceholder(),
+            ),
           ),
         ],
       ),
@@ -83,18 +88,29 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Widget _buildNavItem(IconData icon, String label, int index) {
     bool isSelected = _selectedIndex == index;
+
     return InkWell(
       onTap: () => _onNavTap(index),
       child: Container(
-        color: isSelected ? Colors.green[600] : Colors.transparent,
-        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 12),
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.green[600] : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         child: Row(
           children: [
             Icon(icon, color: Colors.white),
             const SizedBox(width: 10),
-            Text(
-              label,
-              style: const TextStyle(color: Colors.white, fontSize: 16),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontFamily: 'Arial',
+                  fontSize: 16,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ],
         ),
@@ -107,41 +123,39 @@ class _AdminDashboardState extends State<AdminDashboard> {
       padding: const EdgeInsets.all(24.0),
       child: ListView(
         children: [
-          Center(
-            child: Text(
-              "Overview",
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.green[700],
-              ),
+          Text(
+            "Overview",
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.green[800],
+              fontFamily: 'Arial',
             ),
           ),
           const SizedBox(height: 24),
-          Center(
-            child: Wrap(
-              spacing: 20,
-              runSpacing: 20,
-              alignment: WrapAlignment.center,
-              children: [
-                _buildStatCard("Total Instructors", "0", Icons.person),
-                _buildStatCard("Checkers", "0", Icons.verified_user),
-              ],
-            ),
+          Wrap(
+            spacing: 20,
+            runSpacing: 20,
+            alignment: WrapAlignment.start,
+            children: [
+              _buildStatCard("Total Instructors", "0", Icons.person),
+              _buildStatCard("Checkers", "0", Icons.verified_user),
+            ],
           ),
           const SizedBox(height: 40),
           const Text(
             "Recent Activities",
             style: TextStyle(
-              fontSize: 22,
+              fontSize: 20,
               fontWeight: FontWeight.w600,
+              fontFamily: 'Arial',
               color: Colors.green,
             ),
           ),
           const SizedBox(height: 10),
           const Text(
             "No recent activities.",
-            style: TextStyle(color: Colors.black54),
+            style: TextStyle(color: Colors.black54, fontFamily: 'Arial'),
           ),
         ],
       ),
@@ -150,30 +164,76 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Widget _buildStatCard(String title, String count, IconData icon) {
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Container(
-        width: 160,
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+        width: 180,
+        padding: const EdgeInsets.all(20),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 40, color: Colors.green),
+            Icon(icon, size: 40, color: Colors.green[700]),
             const SizedBox(height: 10),
             Text(
               count,
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Colors.black,
+                fontFamily: 'Arial',
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 14, color: Colors.black54),
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black54,
+                fontFamily: 'Arial',
+              ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCheckerPanel() {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        children: [
+          _buildPanel("Instructors", ["Instructor 1", "Instructor 2"]),
+          const SizedBox(width: 16),
+          _buildPanel("Subjects", ["Subject A", "Subject B"]),
+          const SizedBox(width: 16),
+          _buildPanel("Checkers", ["Checker X", "Checker Y"]),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPanel(String title, List<String> items) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.green.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Arial',
+              ),
+            ),
+            const Divider(),
+            ...items.map((e) => ListTile(title: Text(e))).toList(),
           ],
         ),
       ),
@@ -184,8 +244,35 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return const Center(
       child: Text(
         "Feature not yet implemented.",
-        style: TextStyle(fontSize: 18, color: Colors.grey),
+        style: TextStyle(fontSize: 18, color: Colors.grey, fontFamily: 'Arial'),
       ),
+    );
+  }
+
+  void _showLogoutConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Logout"),
+          content: const Text("Are you sure you want to logout?"),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("Cancel"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text("Logout"),
+              onPressed: () {
+                Navigator.of(context).pop(); // close dialog
+                Navigator.of(context).pop(); // go back to login
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

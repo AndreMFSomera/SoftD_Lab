@@ -23,3 +23,7 @@ flutter:
 
   assets:
     - assets/UC_Official_Seal.png
+fonts:
+    - family: Arial
+      fonts:
+        - asset: assets/fonts/arial.ttf

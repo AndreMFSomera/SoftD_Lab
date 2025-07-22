@@ -230,8 +230,6 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
         return _buildAttendanceForm();
       case 1:
         return _buildHistoryPage();
-      case 2:
-        return const Center(child: Text("Settings Page (Coming Soon)"));
       default:
         return const Center(child: Text("Page Not Found"));
     }
@@ -275,32 +273,38 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
       ),
       body: Row(
         children: [
-          NavigationRail(
-            selectedIndex: _selectedIndex,
-            onDestinationSelected: (int index) {
-              setState(() {
-                _selectedIndex = index;
-              });
-            },
-            destinations: const [
-              NavigationRailDestination(
-                icon: Icon(Icons.dashboard),
-                label: Text("Dashboard"),
+          Container(
+            width: 180,
+            color: Colors.green[700],
+            child: NavigationRail(
+              backgroundColor: Colors.green[700],
+              selectedIndex: _selectedIndex,
+              onDestinationSelected: (int index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
+              extended: true,
+              destinations: const [
+                NavigationRailDestination(
+                  icon: Icon(Icons.dashboard, color: Colors.white),
+                  selectedIcon: Icon(Icons.dashboard, color: Colors.white),
+                  label: Text(
+                    "Dashboard",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.history, color: Colors.white),
+                  selectedIcon: Icon(Icons.history, color: Colors.white),
+                  label: Text("History", style: TextStyle(color: Colors.white)),
+                ),
+              ],
+              selectedLabelTextStyle: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
               ),
-              NavigationRailDestination(
-                icon: Icon(Icons.history),
-                label: Text("History"),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.settings),
-                label: Text("Settings"),
-              ),
-            ],
-            labelType: NavigationRailLabelType.all,
-            selectedIconTheme: const IconThemeData(color: Colors.green),
-            selectedLabelTextStyle: const TextStyle(
-              color: Colors.green,
-              fontWeight: FontWeight.bold,
+              unselectedLabelTextStyle: const TextStyle(color: Colors.white70),
             ),
           ),
           const VerticalDivider(width: 1),
