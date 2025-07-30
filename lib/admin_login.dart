@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:softd/checker_dashboard.dart';
 import 'main.dart';
 import 'admin_dashboard.dart';
+import 'api_service.dart';
 
 class AdminLoginScreen extends StatelessWidget {
   AdminLoginScreen({super.key});
@@ -37,7 +37,7 @@ class AdminLoginScreen extends StatelessWidget {
                         child: TextField(
                           controller: adminEmailController,
                           decoration: InputDecoration(
-                            hintText: 'Admin Email or ID',
+                            hintText: 'Admin ID',
                             contentPadding: const EdgeInsets.symmetric(
                               vertical: 15,
                               horizontal: 20,
@@ -77,13 +77,33 @@ class AdminLoginScreen extends StatelessWidget {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 15),
                           ),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => CheckerDashboard(),
-                              ),
+                          onPressed: () async{
+                            final success = await ApiService.login(
+                              adminEmailController.text.trim(),
+                              adminPasswordController.text.trim(),
                             );
+                            if (success) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AdminDashboard(),
+                                ),
+                              );
+                            }else{
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: Text('Login Failed'),
+                                  content: Text('Invalid ID or password.'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: Text('OK'),
+                                    ),
+                                  ],
+                                ),
+                              );        
+                            }    
                           },
                           child: const Text(
                             'Log in',

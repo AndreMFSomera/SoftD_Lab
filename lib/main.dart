@@ -56,7 +56,7 @@ class LoginPage extends StatelessWidget {
                         child: TextField(
                           controller: emailController,
                           decoration: InputDecoration(
-                            hintText: 'Faculty Email or Faculty ID Number',
+                            hintText: 'Faculty ID Number',
                             contentPadding: const EdgeInsets.symmetric(
                               vertical: 15,
                               horizontal: 20,

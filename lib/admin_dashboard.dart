@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'add_instructor_page.dart';
 
+
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
 
@@ -233,7 +234,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ),
             ),
             const Divider(),
-            ...items.map((e) => ListTile(title: Text(e))).toList(),
+            ...items.map((e) => ListTile(title: Text(e))),
           ],
         ),
       ),
