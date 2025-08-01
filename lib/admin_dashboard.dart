@@ -12,6 +12,8 @@ class AdminDashboard extends StatefulWidget {
 class _AdminDashboardState extends State<AdminDashboard> {
   int _selectedIndex = 0;
   int checkerCount = 0;
+  int instructorCount = 0;
+
   bool isLoading = true;
 
   final List<String> _titles = [
@@ -24,6 +26,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
   void initState() {
     super.initState();
     _loadCheckerCount();
+    fetchInstructorCount();
+  }
+
+  Future<void> fetchInstructorCount() async {
+    try {
+      final count = await ApiService.getInstructorCount();
+      setState(() {
+        instructorCount = count;
+      });
+    } catch (e) {
+      print('Failed to fetch instructor count: $e');
+    }
   }
 
   void _loadCheckerCount() async {
@@ -44,21 +58,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   void _onNavTap(int index) {
-    if (_selectedIndex == index) return;
-
-    setState(() {
-      _selectedIndex = index;
-    });
-
     if (index == 1) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const AddInstructorPage()),
-      ).then((_) {
+      ).then((changed) {
         if (mounted) {
           setState(() {
             _selectedIndex = 0;
           });
+          if (changed == true) {
+            fetchInstructorCount(); // <-- Refresh after deletion
+          }
         }
       });
     }
@@ -77,6 +88,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              fetchInstructorCount();
+              _loadCheckerCount();
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => _showLogoutConfirmation(context),
           ),
@@ -93,7 +111,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 const SizedBox(height: 30),
                 _buildNavItem(Icons.dashboard, "Dashboard", 0),
                 _buildNavItem(Icons.person, "Instructors", 1),
-                _buildNavItem(Icons.check, "Manage", 2),
+                _buildNavItem(Icons.check, "Checker", 2),
               ],
             ),
           ),
@@ -166,7 +184,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
             runSpacing: 20,
             alignment: WrapAlignment.start,
             children: [
-              _buildStatCard("Total Instructors", "0", Icons.person),
+              _buildStatCard(
+                "Total Instructors",
+                "$instructorCount",
+                Icons.person,
+              ),
               _buildStatCard(
                 "Checkers",
                 isLoading ? "..." : "$checkerCount",

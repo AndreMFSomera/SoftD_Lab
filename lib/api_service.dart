@@ -31,12 +31,12 @@ class ApiService {
     String role,
   ) async {
     final response = await http.post(
-      Uri.parse('http://localhost:5000/login'),
+      Uri.parse('$baseUrl/login'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'id_number': idNumber,
         'password': password,
-        'role': role, // Send role to API
+        'role': role,
       }),
     );
 
@@ -67,6 +67,58 @@ class ApiService {
     } else {
       print('Signup failed: ${response.body}');
       return false;
+    }
+  }
+
+  static Future<List<Map<String, String>>> getInstructors() async {
+    final response = await http.get(Uri.parse('$baseUrl/get_instructors'));
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body);
+      return data.map((e) => Map<String, String>.from(e)).toList();
+    } else {
+      return [];
+    }
+  }
+
+  static Future<bool> addInstructor(
+    String name,
+    String id,
+    String email,
+  ) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/add_instructor'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'professor_name': name,
+        'id_number': id,
+        'professor_email': email,
+      }),
+    );
+    return response.statusCode == 201;
+  }
+
+  static Future<bool> deleteInstructor(String idNumber) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/delete_instructor/$idNumber'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      print('Delete error: ${response.body}');
+      return false;
+    }
+  }
+
+  static Future<int> getInstructorCount() async {
+    final response = await http.get(Uri.parse('$baseUrl/count_instructors'));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['instructor_count'];
+    } else {
+      throw Exception('Failed to fetch instructor count');
     }
   }
 }

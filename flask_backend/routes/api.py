@@ -69,3 +69,70 @@ def count_checkers():
     conn.close()
 
     return jsonify({"checker_count": count})
+
+# Get all instructors
+@api.route('/add_instructor', methods=['POST'])
+def add_instructor():
+    data = request.get_json()
+    professor_name = data.get('professor_name')
+    id_number = data.get('id_number')
+    professor_email = data.get('professor_email')
+
+    if not professor_name or not id_number or not professor_email:
+        return jsonify({'error': 'Missing fields'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            INSERT INTO instructors (professor_name, id_number, professor_email)
+            VALUES (%s, %s, %s)
+        """, (professor_name, id_number, professor_email))
+        conn.commit()
+        return jsonify({'message': 'Instructor added'}), 201
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@api.route('/get_instructors', methods=['GET'])
+def get_instructors():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        cursor.execute("SELECT * FROM instructors")
+        instructors = cursor.fetchall()
+        return jsonify(instructors)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@api.route('/delete_instructor/<id_number>', methods=['DELETE'])
+def delete_instructor(id_number):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("DELETE FROM instructors WHERE id_number = %s", (id_number,))
+    conn.commit()
+    conn.close()
+
+    return jsonify({'message': 'Instructor deleted successfully'}), 200
+
+@api.route('/count_instructors', methods=['GET'])
+def count_instructors():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM instructors")
+    count = cursor.fetchone()[0]
+
+    cursor.close()
+    conn.close()
+
+    return jsonify({'instructor_count': count})
