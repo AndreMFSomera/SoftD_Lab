@@ -32,7 +32,7 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
   Future<void> fetchProfessors() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/professors'),
+        Uri.parse('http://localhost:5000/get_instructors'),
       );
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
