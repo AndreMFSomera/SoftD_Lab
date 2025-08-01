@@ -10,7 +10,7 @@ def get_db_connection():
         password='',
         database='FacultyAttendanceDB'
     )
-
+    
 @api.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -51,6 +51,35 @@ def signup():
 
     except mysql.connector.Error as err:
         return jsonify({"status": "error", "message": str(err)}), 400
+
+    finally:
+        cursor.close()
+        conn.close()
+
+@api.route('/recordAttendance', methods=['POST'])
+def record_attendance():
+    data = request.get_json()
+    print("Received data:", data)  # ✅ ADD THIS LINE
+
+    checker_id = data.get('checker_id')
+    professor_name = data.get('professor_name')
+    room_number = data.get('room_number')
+    attendance_status = data.get('attendance_status')
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO attendance_records (checker_id, professor_name, room_number, attendance_status)
+            VALUES (%s, %s, %s, %s)
+        """, (checker_id, professor_name, room_number, attendance_status))
+
+        conn.commit()
+        return jsonify({'message': 'Attendance recorded successfully'}), 200
+
+    except Exception as e:
+        print(str(e))
+        return jsonify({'error': 'Failed to record attendance'}), 500
 
     finally:
         cursor.close()
