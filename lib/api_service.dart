@@ -121,4 +121,37 @@ class ApiService {
       throw Exception('Failed to fetch instructor count');
     }
   }
+
+  static Future<List<Map<String, dynamic>>> getCheckers() async {
+    final response = await http.get(Uri.parse('$baseUrl/checkers'));
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.cast<Map<String, dynamic>>();
+    } else {
+      throw Exception('Failed to load checkers');
+    }
+  }
+
+  static Future<bool> deleteUser(int userId) async {
+    final response = await http.delete(Uri.parse('$baseUrl/users/$userId'));
+    return response.statusCode == 200;
+  }
+
+  static Future<bool> addUser(
+    String username,
+    String password,
+    String role,
+  ) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/add_user'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'username': username,
+        'password': password,
+        'role': role,
+      }),
+    );
+
+    return response.statusCode == 200;
+  }
 }

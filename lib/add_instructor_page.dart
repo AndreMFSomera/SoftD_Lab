@@ -16,6 +16,7 @@ class _AddInstructorPageState extends State<AddInstructorPage> {
       TextEditingController();
 
   List<dynamic> instructors = [];
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -50,6 +51,8 @@ class _AddInstructorPageState extends State<AddInstructorPage> {
       return;
     }
 
+    setState(() => _isLoading = true);
+
     try {
       final response = await http.post(
         Uri.parse('http://localhost:5000/add_instructor'),
@@ -61,6 +64,8 @@ class _AddInstructorPageState extends State<AddInstructorPage> {
         }),
       );
 
+      setState(() => _isLoading = false);
+
       if (response.statusCode == 201) {
         showSuccess('Instructor added successfully.');
         clearFields();
@@ -70,6 +75,7 @@ class _AddInstructorPageState extends State<AddInstructorPage> {
         showError('Add failed: $error');
       }
     } catch (e) {
+      setState(() => _isLoading = false);
       showError('Error: $e');
     }
   }
@@ -87,7 +93,7 @@ class _AddInstructorPageState extends State<AddInstructorPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -129,38 +135,74 @@ class _AddInstructorPageState extends State<AddInstructorPage> {
     );
   }
 
+  InputDecoration themedInput(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Colors.green),
+      filled: true,
+      fillColor: Colors.green.shade50,
+      enabledBorder: OutlineInputBorder(
+        borderSide: const BorderSide(color: Colors.green),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderSide: const BorderSide(color: Colors.green, width: 2),
+        borderRadius: BorderRadius.circular(10),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Add Instructor'),
-        backgroundColor: Colors.brown,
+        backgroundColor: Colors.green.shade700,
+        foregroundColor: Colors.white,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             TextField(
               controller: professorNameController,
-              decoration: const InputDecoration(labelText: 'Professor Name'),
-            ),
-            TextField(
-              controller: idNumberController,
-              decoration: const InputDecoration(labelText: 'ID Number'),
-            ),
-            TextField(
-              controller: professorEmailController,
-              decoration: const InputDecoration(labelText: 'Email'),
+              decoration: themedInput('Professor Name'),
             ),
             const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: addInstructor,
-              child: const Text('Add Instructor'),
+            TextField(
+              controller: idNumberController,
+              decoration: themedInput('ID Number'),
             ),
-            const Divider(height: 32),
-            const Text(
-              'Instructors:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            const SizedBox(height: 12),
+            TextField(
+              controller: professorEmailController,
+              decoration: themedInput('Email'),
+              keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 45,
+              child: ElevatedButton.icon(
+                onPressed: _isLoading ? null : addInstructor,
+                icon: const Icon(Icons.person_add),
+                label: Text(_isLoading ? 'Adding...' : 'Add Instructor'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green.shade600,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Instructors',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
             ),
             const SizedBox(height: 8),
             Expanded(
@@ -169,8 +211,14 @@ class _AddInstructorPageState extends State<AddInstructorPage> {
                 itemBuilder: (context, index) {
                   final instructor = instructors[index];
                   return Card(
-                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    color: Colors.green.shade50,
+                    margin: const EdgeInsets.symmetric(vertical: 5),
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     child: ListTile(
+                      leading: const Icon(Icons.person, color: Colors.green),
                       title: Text(instructor['professor_name']),
                       subtitle: Text(
                         '${instructor['id_number']} • ${instructor['professor_email']}',

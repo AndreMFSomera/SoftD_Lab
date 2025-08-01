@@ -136,3 +136,42 @@ def count_instructors():
     conn.close()
 
     return jsonify({'instructor_count': count})
+
+@api.route('/checker_count', methods=['GET'])
+def checker_count():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'checker'")
+    count = cursor.fetchone()[0]
+    conn.close()
+    return jsonify({'count': count})
+
+@api.route('/delete_checker/<int:user_id>', methods=['DELETE'])
+def delete_checker(user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM users WHERE id = %s AND role = 'checker'", (user_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({'message': 'Checker deleted'})
+
+@api.route('/checkers', methods=['GET'])
+def get_checkers():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT id, full_name, id_number, role, created_at FROM users WHERE role = 'checker'")
+    checkers = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return jsonify(checkers)
+
+@api.route('/users/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return jsonify({'message': 'User deleted successfully'})
+

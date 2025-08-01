@@ -143,11 +143,44 @@ class SignupPage extends StatelessWidget {
                               return;
                             }
 
-                            final success = await ApiService.signup(
-                              name,
-                              emailOrId,
-                              password,
+                            // Show loading indicator
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (_) => const Center(
+                                child: CircularProgressIndicator(),
+                              ),
                             );
+
+                            bool success = false;
+                            try {
+                              success = await ApiService.signup(
+                                name,
+                                emailOrId,
+                                password,
+                              );
+                            } catch (e) {
+                              if (context.mounted) {
+                                Navigator.pop(context); // Close loading
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => AlertDialog(
+                                    title: const Text('Network Error'),
+                                    content: Text('Something went wrong: $e'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text('OK'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                              return;
+                            }
+
+                            if (context.mounted)
+                              Navigator.pop(context); // Close loading
 
                             if (success) {
                               if (context.mounted) {
@@ -161,15 +194,21 @@ class SignupPage extends StatelessWidget {
                                     actions: [
                                       TextButton(
                                         onPressed: () {
-                                          Navigator.pop(
+                                          Navigator.of(
                                             context,
-                                          ); // Close dialog
-                                          if (context.mounted) {
-                                            Navigator.pop(
-                                              context,
-                                            ); // Go back to login screen
-                                          }
+                                          ).pop(); // Close AlertDialog
+                                          Future.delayed(
+                                            const Duration(milliseconds: 300),
+                                            () {
+                                              if (context.mounted) {
+                                                Navigator.of(
+                                                  context,
+                                                ).pop(); // Pop SignupPage after delay
+                                              }
+                                            },
+                                          );
                                         },
+
                                         child: const Text('OK'),
                                       ),
                                     ],
@@ -216,6 +255,7 @@ class SignupPage extends StatelessWidget {
                   ),
                 ),
               ),
+
               // Right side panel
               Expanded(
                 flex: 1,
@@ -241,6 +281,7 @@ class SignupPage extends StatelessWidget {
               ),
             ],
           ),
+
           // Logo and system name
           Positioned(
             top: 20,
