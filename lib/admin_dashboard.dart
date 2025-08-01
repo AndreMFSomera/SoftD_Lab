@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'add_instructor_page.dart';
-
+import 'api_service.dart'; // <-- Make sure this exists and has getCheckerCount()
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -11,12 +11,37 @@ class AdminDashboard extends StatefulWidget {
 
 class _AdminDashboardState extends State<AdminDashboard> {
   int _selectedIndex = 0;
+  int checkerCount = 0;
+  bool isLoading = true;
 
   final List<String> _titles = [
     'Admin - Dashboard',
     'Admin - Instructors',
     'Admin - Manage',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCheckerCount();
+  }
+
+  void _loadCheckerCount() async {
+    try {
+      final count = await ApiService.getCheckerCount();
+      if (!mounted) return;
+      setState(() {
+        checkerCount = count;
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching checker count: $e');
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   void _onNavTap(int index) {
     if (_selectedIndex == index) return;
@@ -30,9 +55,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
         context,
         MaterialPageRoute(builder: (context) => const AddInstructorPage()),
       ).then((_) {
-        setState(() {
-          _selectedIndex = 0;
-        });
+        if (mounted) {
+          setState(() {
+            _selectedIndex = 0;
+          });
+        }
       });
     }
   }
@@ -140,7 +167,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
             alignment: WrapAlignment.start,
             children: [
               _buildStatCard("Total Instructors", "0", Icons.person),
-              _buildStatCard("Checkers", "0", Icons.verified_user),
+              _buildStatCard(
+                "Checkers",
+                isLoading ? "..." : "$checkerCount",
+                Icons.verified_user,
+              ),
             ],
           ),
           const SizedBox(height: 40),
@@ -253,7 +284,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   void _showLogoutConfirmation(BuildContext context) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text("Logout"),
           content: const Text("Are you sure you want to logout?"),
@@ -261,14 +292,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
             TextButton(
               child: const Text("Cancel"),
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(dialogContext).pop();
               },
             ),
             TextButton(
               child: const Text("Logout"),
               onPressed: () {
-                Navigator.of(context).pop(); // close dialog
-                Navigator.of(context).pop(); // go back to login
+                Navigator.of(dialogContext).pop(); // close dialog
+                if (Navigator.canPop(context)) {
+                  Navigator.of(context).pop(); // go back to login
+                }
               },
             ),
           ],

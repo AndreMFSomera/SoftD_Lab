@@ -4,6 +4,17 @@ import 'dart:convert';
 class ApiService {
   static const String baseUrl = 'http://192.168.1.191:5000';
 
+  static Future<int> getCheckerCount() async {
+    final response = await http.get(Uri.parse('$baseUrl/count_checkers'));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['checker_count'];
+    } else {
+      throw Exception('Failed to fetch checker count');
+    }
+  }
+
   static Future<void> testApi() async {
     final response = await http.get(Uri.parse('$baseUrl/test'));
 

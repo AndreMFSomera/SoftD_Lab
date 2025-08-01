@@ -56,3 +56,16 @@ def signup():
     finally:
         cursor.close()
         conn.close()
+
+@api.route('/count_checkers', methods=['GET'])
+def count_checkers():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'checker'")
+    (count,) = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    return jsonify({"checker_count": count})
