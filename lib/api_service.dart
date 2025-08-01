@@ -2,7 +2,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.1.191:5000';
+  static const String baseUrl = 'http://192.168.1.5:5000';
 
   static Future<int> getCheckerCount() async {
     final response = await http.get(Uri.parse('$baseUrl/count_checkers'));
@@ -154,4 +154,24 @@ class ApiService {
 
     return response.statusCode == 200;
   }
+static Future<bool> saveAttendance({
+  required String recordedBy, 
+  required String professorName,
+  required String roomNumber,
+  required String attendanceStatus,
+}) async {
+  final response = await http.post(
+    Uri.parse('$baseUrl/save_attendance'),
+    headers: {'Content-Type': 'application/json'},
+    body: jsonEncode({
+      'recorded_by': recordedBy,
+      'professor_name': professorName,
+      'room_number': roomNumber,
+      'attendance_status': attendanceStatus,
+    }),
+  );
+
+  return response.statusCode == 200;
+}
+
 }

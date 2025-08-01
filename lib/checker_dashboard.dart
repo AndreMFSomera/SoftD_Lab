@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:softd/api_service.dart'; 
 import 'package:softd/main.dart';
 
 class CheckerDashboard extends StatefulWidget {
@@ -55,19 +56,36 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
     });
   }
 
-  void _saveAttendance() {
+  void _saveAttendance() async{
     if (_formKey.currentState!.validate() && attendanceStatus != null) {
+      final prefs = await SharedPreferences.getInstance();
+      String? checkerId = prefs.getString('id_number');
+
+      if (checkerId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("User not logged in")),
+        );
+        return;
+      }
+
       final dateStr = now.toLocal().toString().split(' ')[0];
       final timeStr = now.toLocal().toString().split(' ')[1].split('.').first;
 
-      setState(() {
-        _attendanceRecords.add({
-          'name': selectedProfessor!,
-          'room': roomController.text,
-          'date': dateStr,
-          'time': timeStr,
-          'status': attendanceStatus!,
-        });
+      final success = await ApiService.saveAttendance(
+        recordedBy: checkerId,
+        professorName: selectedProfessor!,
+        roomNumber: roomController.text,
+        attendanceStatus: attendanceStatus!,
+      );
+      if (success) {
+        setState(() {
+          _attendanceRecords.add({
+            'name': selectedProfessor!,
+            'room': roomController.text,
+            'date': dateStr,
+            'time': timeStr,
+            'status': attendanceStatus!,
+          });
 
         selectedProfessor = null;
         roomController.clear();
@@ -83,7 +101,7 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
       ).showSnackBar(const SnackBar(content: Text("Please complete the form")));
     }
   }
-
+  }
   Widget _buildAttendanceForm() {
     final dateStr = now.toLocal().toString().split(' ')[0];
     final timeStr = now.toLocal().toString().split(' ')[1].split('.').first;

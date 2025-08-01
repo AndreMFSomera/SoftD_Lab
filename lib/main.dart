@@ -3,6 +3,7 @@ import 'package:softd/checker_dashboard.dart';
 import 'admin_login.dart';
 import 'checker_signup.dart';
 import 'api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
@@ -98,6 +99,7 @@ class LoginPage extends StatelessWidget {
                           ),
                           onPressed: () async {
                             print('Attempting login...');
+                            final idNumber = emailController.text.trim();
                             final success = await ApiService.login(
                               emailController.text.trim(),
                               passwordController.text.trim(),
@@ -105,6 +107,8 @@ class LoginPage extends StatelessWidget {
                             );
                             print('Login success: $success');
                             if (success) {
+                              final prefs = await SharedPreferences.getInstance();
+                               await prefs.setString('id_number', idNumber);
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(

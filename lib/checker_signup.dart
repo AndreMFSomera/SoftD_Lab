@@ -179,8 +179,9 @@ class SignupPage extends StatelessWidget {
                               return;
                             }
 
-                            if (context.mounted)
+                            if (context.mounted) {
                               Navigator.pop(context); // Close loading
+                            }
 
                             if (success) {
                               if (context.mounted) {

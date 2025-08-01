@@ -7,7 +7,7 @@ def get_db_connection():
     return mysql.connector.connect(
         host='localhost',
         user='root',
-        password='160240',
+        password='',
         database='FacultyAttendanceDB'
     )
     
@@ -99,6 +99,36 @@ def get_all_instructors():
         cursor.execute("SELECT * FROM instructors")
         instructors = cursor.fetchall()
         return jsonify(instructors)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@api.route('/save_attendance', methods=['POST'])
+def save_attendance():
+    data = request.get_json()
+
+    recorded_by = data.get('recorded_by')  # This is the id_number (string)
+    professor_name = data.get('professor_name')
+    room_number = data.get('room_number')
+    attendance_status = data.get('attendance_status')
+
+    if not all([recorded_by, professor_name, room_number, attendance_status]):
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            INSERT INTO attendance_records (
+                recorded_by, professor_name, room_number, attendance_status
+            ) VALUES (%s, %s, %s, %s)
+        """, (recorded_by, professor_name, room_number, attendance_status))
+
+        conn.commit()
+        return jsonify({'message': 'Attendance saved successfully'}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:
