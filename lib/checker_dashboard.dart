@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import 'package:softd/main.dart';
+import 'api_service.dart';
+
 
 class CheckerDashboard extends StatefulWidget {
   const CheckerDashboard({super.key});
@@ -55,10 +57,22 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
     });
   }
 
-  void _saveAttendance() {
+  void _saveAttendance() async {
     if (_formKey.currentState!.validate() && attendanceStatus != null) {
-      final dateStr = now.toLocal().toString().split(' ')[0];
-      final timeStr = now.toLocal().toString().split(' ')[1].split('.').first;
+      final professorName = professorNameController.text;
+      final roomNumber = roomController.text;
+
+      final success = await ApiService.recordAttendance(
+        checkerId: UserSession.id!, 
+        professorName: professorName,
+        roomNumber: roomNumber,
+        attendanceStatus: attendanceStatus!,
+      );
+
+      if (success) {
+        final now = DateTime.now();
+        final dateStr = now.toLocal().toString().split(' ')[0];
+        final timeStr = now.toLocal().toString().split(' ')[1].split('.').first;
 
       setState(() {
         _attendanceRecords.add({
@@ -74,17 +88,23 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
         attendanceStatus = null;
       });
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Attendance saved!")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Attendance recorded!")),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to record attendance")),
+        );
+      }
     } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Please complete the form")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please complete the form")),
+      );
     }
   }
 
   Widget _buildAttendanceForm() {
+    
     final dateStr = now.toLocal().toString().split(' ')[0];
     final timeStr = now.toLocal().toString().split(' ')[1].split('.').first;
 
@@ -187,6 +207,7 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 value: attendanceStatus,
+                hint: const Text("Select Status"),
                 items: const [
                   DropdownMenuItem(value: "Present", child: Text("Present")),
                   DropdownMenuItem(value: "Absent", child: Text("Absent")),
