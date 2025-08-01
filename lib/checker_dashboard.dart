@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 import 'package:softd/main.dart';
 
 class CheckerDashboard extends StatefulWidget {
@@ -12,12 +15,39 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
   int _selectedIndex = 0;
 
   final _formKey = GlobalKey<FormState>();
-  final professorNameController = TextEditingController();
+  String? selectedProfessor;
   final roomController = TextEditingController();
   String? attendanceStatus;
   DateTime now = DateTime.now();
 
   final List<Map<String, String>> _attendanceRecords = [];
+  List<String> professorNames = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchProfessors();
+  }
+
+  Future<void> fetchProfessors() async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://localhost:5000/get_instructors'),
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          professorNames = data
+              .map((item) => item['professor_name'].toString())
+              .toList();
+        });
+      } else {
+        throw Exception('Failed to load professor names');
+      }
+    } catch (e) {
+      print('Error fetching professor names: $e');
+    }
+  }
 
   void _refreshTime() {
     setState(() {
@@ -32,14 +62,14 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
 
       setState(() {
         _attendanceRecords.add({
-          'name': professorNameController.text,
+          'name': selectedProfessor!,
           'room': roomController.text,
           'date': dateStr,
           'time': timeStr,
           'status': attendanceStatus!,
         });
 
-        professorNameController.clear();
+        selectedProfessor = null;
         roomController.clear();
         attendanceStatus = null;
       });
@@ -88,14 +118,25 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
                 ),
               ),
               const SizedBox(height: 20),
-              TextFormField(
-                controller: professorNameController,
+              DropdownButtonFormField<String>(
+                value: selectedProfessor,
+                items: professorNames.map((name) {
+                  return DropdownMenuItem<String>(
+                    value: name,
+                    child: Text(name),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedProfessor = value;
+                  });
+                },
                 decoration: const InputDecoration(
                   labelText: "Professor Name",
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) =>
-                    value == null || value.isEmpty ? 'Required' : null,
+                    value == null ? 'Please select a professor' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
