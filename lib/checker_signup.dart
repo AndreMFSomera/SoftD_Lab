@@ -7,7 +7,8 @@ class SignupPage extends StatelessWidget {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +27,10 @@ class SignupPage extends StatelessWidget {
                     children: [
                       const Text(
                         'Sign Up for a Faculty Account',
-                        style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 40,
+                          fontWeight: FontWeight.bold,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 20),
@@ -39,7 +43,10 @@ class SignupPage extends StatelessWidget {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 15,
+                              horizontal: 20,
+                            ),
                           ),
                         ),
                       ),
@@ -53,7 +60,10 @@ class SignupPage extends StatelessWidget {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 15,
+                              horizontal: 20,
+                            ),
                           ),
                         ),
                       ),
@@ -68,7 +78,10 @@ class SignupPage extends StatelessWidget {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 15,
+                              horizontal: 20,
+                            ),
                           ),
                         ),
                       ),
@@ -83,7 +96,10 @@ class SignupPage extends StatelessWidget {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 15,
+                              horizontal: 20,
+                            ),
                           ),
                         ),
                       ),
@@ -98,55 +114,131 @@ class SignupPage extends StatelessWidget {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 15),
                           ),
-                          onPressed: () async{
+                          onPressed: () async {
                             final name = nameController.text.trim();
                             final emailOrId = emailController.text.trim();
                             final password = passwordController.text.trim();
-                            final confirmPassword = confirmPasswordController.text.trim();
+                            final confirmPassword = confirmPasswordController
+                                .text
+                                .trim();
 
                             if (password != confirmPassword) {
-                              showDialog(
-                                context: context,
-                                builder: (_) => AlertDialog(
-                                   title: Text('Error'),
-                                   content: Text('Passwords do not match'),
-                                   actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text('OK'))],
-                                ),
-                              );
-                              return;
-                          }
-
-                          final success = await ApiService.signup(name, emailOrId, password);
-
-                           if (success) {
-                            showDialog(
-                              context: context,
-                              builder: (_) => AlertDialog(
-                                title: Text('Success'),
-                                content: Text('Account created successfully. You can now log in.'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(context); // Close dialog
-                                      Navigator.pop(context); // Go back to login screen
-                                    },
-                                    child: Text('OK'),
+                              if (context.mounted) {
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => AlertDialog(
+                                    title: const Text('Error'),
+                                    content: const Text(
+                                      'Passwords do not match',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text('OK'),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                            );
-                           }else {
+                                );
+                              }
+                              return;
+                            }
+
+                            // Show loading indicator
                             showDialog(
                               context: context,
-                              builder: (_) => AlertDialog(
-                                title: Text('Error'),
-                                content: Text('Signup failed. Email/ID might already exist.'),
-                                actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text('OK'))],
+                              barrierDismissible: false,
+                              builder: (_) => const Center(
+                                child: CircularProgressIndicator(),
                               ),
                             );
-                           }
-                          },                                                                                                             
-                          child: const Text('Sign Up', style: TextStyle(fontSize: 18)),
+
+                            bool success = false;
+                            try {
+                              success = await ApiService.signup(
+                                name,
+                                emailOrId,
+                                password,
+                              );
+                            } catch (e) {
+                              if (context.mounted) {
+                                Navigator.pop(context); // Close loading
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => AlertDialog(
+                                    title: const Text('Network Error'),
+                                    content: Text('Something went wrong: $e'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text('OK'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                              return;
+                            }
+
+                            if (context.mounted)
+                              Navigator.pop(context); // Close loading
+
+                            if (success) {
+                              if (context.mounted) {
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => AlertDialog(
+                                    title: const Text('Success'),
+                                    content: const Text(
+                                      'Account created successfully. You can now log in.',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(
+                                            context,
+                                          ).pop(); // Close AlertDialog
+                                          Future.delayed(
+                                            const Duration(milliseconds: 300),
+                                            () {
+                                              if (context.mounted) {
+                                                Navigator.of(
+                                                  context,
+                                                ).pop(); // Pop SignupPage after delay
+                                              }
+                                            },
+                                          );
+                                        },
+
+                                        child: const Text('OK'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                            } else {
+                              if (context.mounted) {
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => AlertDialog(
+                                    title: const Text('Error'),
+                                    content: const Text(
+                                      'Signup failed. Email/ID might already exist.',
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text('OK'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          child: const Text(
+                            'Sign Up',
+                            style: TextStyle(fontSize: 18),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -154,12 +246,16 @@ class SignupPage extends StatelessWidget {
                         onPressed: () {
                           Navigator.pop(context); // Go back to login page
                         },
-                        child: const Text('Already have an account? Log in', style: TextStyle(color: Colors.blue)),
+                        child: const Text(
+                          'Already have an account? Log in',
+                          style: TextStyle(color: Colors.blue),
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
+
               // Right side panel
               Expanded(
                 flex: 1,
@@ -185,6 +281,7 @@ class SignupPage extends StatelessWidget {
               ),
             ],
           ),
+
           // Logo and system name
           Positioned(
             top: 20,

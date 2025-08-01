@@ -1,6 +1,8 @@
+// admin_dashboard.dart
 import 'package:flutter/material.dart';
 import 'add_instructor_page.dart';
-
+import 'add_checker.dart';
+import 'api_service.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -11,12 +13,51 @@ class AdminDashboard extends StatefulWidget {
 
 class _AdminDashboardState extends State<AdminDashboard> {
   int _selectedIndex = 0;
+  int checkerCount = 0;
+  int instructorCount = 0;
+  bool isLoading = true;
 
   final List<String> _titles = [
     'Admin - Dashboard',
     'Admin - Instructors',
     'Admin - Manage',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCheckerCount();
+    fetchInstructorCount();
+  }
+
+  Future<void> fetchInstructorCount() async {
+    try {
+      final count = await ApiService.getInstructorCount();
+      if (!mounted) return;
+      setState(() {
+        instructorCount = count;
+      });
+    } catch (e) {
+      print('Failed to fetch instructor count: $e');
+    }
+  }
+
+  void _loadCheckerCount() async {
+    try {
+      final count = await ApiService.getCheckerCount();
+      if (!mounted) return;
+      setState(() {
+        checkerCount = count;
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching checker count: $e');
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   void _onNavTap(int index) {
     if (_selectedIndex == index) return;
@@ -30,9 +71,26 @@ class _AdminDashboardState extends State<AdminDashboard> {
         context,
         MaterialPageRoute(builder: (context) => const AddInstructorPage()),
       ).then((_) {
-        setState(() {
-          _selectedIndex = 0;
-        });
+        if (mounted) {
+          setState(() {
+            _selectedIndex = 0;
+          });
+          fetchInstructorCount();
+        }
+      });
+    }
+
+    if (index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const CheckerListPage()),
+      ).then((_) {
+        if (mounted) {
+          setState(() {
+            _selectedIndex = 0;
+          });
+          _loadCheckerCount();
+        }
       });
     }
   }
@@ -139,8 +197,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
             runSpacing: 20,
             alignment: WrapAlignment.start,
             children: [
-              _buildStatCard("Total Instructors", "0", Icons.person),
-              _buildStatCard("Checkers", "0", Icons.verified_user),
+              _buildStatCard(
+                "Total Instructors",
+                "$instructorCount",
+                Icons.person,
+              ),
+              _buildStatCard(
+                "Checkers",
+                isLoading ? "..." : "$checkerCount",
+                Icons.verified_user,
+              ),
             ],
           ),
           const SizedBox(height: 40),
@@ -199,45 +265,69 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Widget _buildCheckerPanel() {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Row(
-        children: [
-          _buildPanel("Instructors", ["Instructor 1", "Instructor 2"]),
-          const SizedBox(width: 16),
-          _buildPanel("Subjects", ["Subject A", "Subject B"]),
-          const SizedBox(width: 16),
-          _buildPanel("Checkers", ["Checker X", "Checker Y"]),
-        ],
-      ),
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: ApiService.getCheckers(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: \${snapshot.error}'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text('No checkers found.'));
+        }
+
+        final checkers = snapshot.data!;
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: checkers.length,
+          itemBuilder: (context, index) {
+            final checker = checkers[index];
+            return Card(
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              child: ListTile(
+                title: Text(checker['username']),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () => _confirmDeleteChecker(checker['id']),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
-  Widget _buildPanel(String title, List<String> items) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.green.shade200),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Arial',
-              ),
+  void _confirmDeleteChecker(int checkerId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text("Delete Checker"),
+          content: const Text("Are you sure you want to delete this checker?"),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("Cancel"),
+              onPressed: () => Navigator.of(dialogContext).pop(),
             ),
-            const Divider(),
-            ...items.map((e) => ListTile(title: Text(e))),
+            TextButton(
+              child: const Text("Delete"),
+              onPressed: () async {
+                Navigator.of(dialogContext).pop(); // Close the dialog
+                final success = await ApiService.deleteUser(checkerId);
+                if (success && mounted) {
+                  setState(() {}); // Reload UI
+                  _loadCheckerCount();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Failed to delete checker')),
+                  );
+                }
+              },
+            ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -253,7 +343,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   void _showLogoutConfirmation(BuildContext context) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text("Logout"),
           content: const Text("Are you sure you want to logout?"),
@@ -261,14 +351,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
             TextButton(
               child: const Text("Cancel"),
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(dialogContext).pop();
               },
             ),
             TextButton(
               child: const Text("Logout"),
               onPressed: () {
-                Navigator.of(context).pop(); // close dialog
-                Navigator.of(context).pop(); // go back to login
+                Navigator.of(dialogContext).pop();
+                if (Navigator.canPop(context)) {
+                  Navigator.of(context).pop();
+                }
               },
             ),
           ],

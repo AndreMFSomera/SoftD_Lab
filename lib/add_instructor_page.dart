@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class AddInstructorPage extends StatefulWidget {
   const AddInstructorPage({super.key});
@@ -8,102 +10,144 @@ class AddInstructorPage extends StatefulWidget {
 }
 
 class _AddInstructorPageState extends State<AddInstructorPage> {
-  final _formKey = GlobalKey<FormState>();
-  final nameController = TextEditingController();
-  final idController = TextEditingController();
-  final emailController = TextEditingController();
-  final departmentController = TextEditingController();
-  final designationController = TextEditingController();
-  final contactController = TextEditingController();
+  final TextEditingController professorNameController = TextEditingController();
+  final TextEditingController idNumberController = TextEditingController();
+  final TextEditingController professorEmailController =
+      TextEditingController();
 
-  // Store all instructors
-  final List<Map<String, String>> _instructors = [];
+  List<dynamic> instructors = [];
+  bool _isLoading = false;
 
-  void _saveInstructor() {
-    if (_formKey.currentState!.validate()) {
-      // Add new instructor to the list
-      _instructors.add({
-        "name": nameController.text,
-        "id": idController.text,
-        "email": emailController.text,
-        "department": departmentController.text,
-        "designation": designationController.text,
-        "contact": contactController.text,
-      });
+  @override
+  void initState() {
+    super.initState();
+    fetchInstructors();
+  }
 
-      // Clear form
-      nameController.clear();
-      idController.clear();
-      emailController.clear();
-      departmentController.clear();
-      designationController.clear();
-      contactController.clear();
-
-      setState(() {});
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Instructor saved successfully!")),
+  Future<void> fetchInstructors() async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://localhost:5000/get_instructors'),
       );
+      if (response.statusCode == 200) {
+        setState(() {
+          instructors = json.decode(response.body);
+        });
+      } else {
+        showError('Failed to load instructors.');
+      }
+    } catch (e) {
+      showError('Error: $e');
     }
   }
 
-  void _removeInstructor(int index) {
-    setState(() {
-      _instructors.removeAt(index);
-    });
+  Future<void> addInstructor() async {
+    final professorName = professorNameController.text.trim();
+    final idNumber = idNumberController.text.trim();
+    final professorEmail = professorEmailController.text.trim();
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text("Instructor removed.")));
+    if (professorName.isEmpty || idNumber.isEmpty || professorEmail.isEmpty) {
+      showError('Please fill in all fields.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://localhost:5000/add_instructor'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'professor_name': professorName,
+          'id_number': idNumber,
+          'professor_email': professorEmail,
+        }),
+      );
+
+      setState(() => _isLoading = false);
+
+      if (response.statusCode == 201) {
+        showSuccess('Instructor added successfully.');
+        clearFields();
+        fetchInstructors();
+      } else {
+        final error = jsonDecode(response.body)['error'] ?? 'Unknown error';
+        showError('Add failed: $error');
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      showError('Error: $e');
+    }
   }
 
-  InputDecoration _inputDecoration(String label) =>
-      InputDecoration(labelText: label, border: const OutlineInputBorder());
-
-  Widget _buildInstructorTable() {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.green.shade100),
-        borderRadius: BorderRadius.circular(12),
-        color: Colors.grey[50],
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          headingRowColor: WidgetStateColor.resolveWith(
-            (states) => Colors.green.shade100,
+  Future<void> deleteInstructor(String idNumber) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Deletion'),
+        content: const Text('Are you sure you want to delete this instructor?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
           ),
-          columns: const [
-            DataColumn(label: Text("Full Name")),
-            DataColumn(label: Text("ID Number")),
-            DataColumn(label: Text("School Email")),
-            DataColumn(label: Text("Department")),
-            DataColumn(label: Text("Designation")),
-            DataColumn(label: Text("Contact Number")),
-            DataColumn(label: Text("Actions")),
-          ],
-          rows: List.generate(_instructors.length, (index) {
-            final instructor = _instructors[index];
-            return DataRow(
-              cells: [
-                DataCell(Text(instructor['name']!)),
-                DataCell(Text(instructor['id']!)),
-                DataCell(Text(instructor['email']!)),
-                DataCell(Text(instructor['department']!)),
-                DataCell(Text(instructor['designation']!)),
-                DataCell(Text(instructor['contact']!)),
-                DataCell(
-                  IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    tooltip: "Remove",
-                    onPressed: () => _removeInstructor(index),
-                  ),
-                ),
-              ],
-            );
-          }),
-        ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      final response = await http.delete(
+        Uri.parse('http://localhost:5000/delete_instructor/$idNumber'),
+      );
+
+      if (response.statusCode == 200) {
+        showSuccess('Instructor deleted.');
+        fetchInstructors();
+      } else {
+        showError('Delete failed.');
+      }
+    } catch (e) {
+      showError('Error: $e');
+    }
+  }
+
+  void clearFields() {
+    professorNameController.clear();
+    idNumberController.clear();
+    professorEmailController.clear();
+  }
+
+  void showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+  void showSuccess(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.green),
+    );
+  }
+
+  InputDecoration themedInput(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Colors.green),
+      filled: true,
+      fillColor: Colors.green.shade50,
+      enabledBorder: OutlineInputBorder(
+        borderSide: const BorderSide(color: Colors.green),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderSide: const BorderSide(color: Colors.green, width: 2),
+        borderRadius: BorderRadius.circular(10),
       ),
     );
   }
@@ -112,103 +156,82 @@ class _AddInstructorPageState extends State<AddInstructorPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Manage Instructors"),
-        backgroundColor: Colors.green[700],
+        title: const Text('Add Instructor'),
+        backgroundColor: Colors.green.shade700,
+        foregroundColor: Colors.white,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(16),
+        child: Column(
           children: [
-            // Left: Form
-            Expanded(
-              flex: 1,
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: Colors.green.shade100),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Form(
-                  key: _formKey,
-                  child: ListView(
-                    children: [
-                      TextFormField(
-                        controller: nameController,
-                        decoration: _inputDecoration("Full Name"),
-                        validator: (val) =>
-                            val == null || val.isEmpty ? 'Required' : null,
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: idController,
-                        decoration: _inputDecoration("ID Number"),
-                        validator: (val) =>
-                            val == null || val.isEmpty ? 'Required' : null,
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: emailController,
-                        decoration: _inputDecoration("School Email Address"),
-                        keyboardType: TextInputType.emailAddress,
-                        validator: (val) {
-                          if (val == null || val.isEmpty) return 'Required';
-                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(val)) {
-                            return 'Enter a valid email';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: departmentController,
-                        decoration: _inputDecoration("Department"),
-                        validator: (val) =>
-                            val == null || val.isEmpty ? 'Required' : null,
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: designationController,
-                        decoration: _inputDecoration("Designation/Position"),
-                        validator: (val) =>
-                            val == null || val.isEmpty ? 'Required' : null,
-                      ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: contactController,
-                        decoration: _inputDecoration("Contact Number"),
-                        keyboardType: TextInputType.phone,
-                        validator: (val) =>
-                            val == null || val.isEmpty ? 'Required' : null,
-                      ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: 300,
-                        child: ElevatedButton(
-                          onPressed: _saveInstructor,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
-                          child: const Text("Save Instructor"),
-                        ),
-                      ),
-                    ],
+            TextField(
+              controller: professorNameController,
+              decoration: themedInput('Professor Name'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: idNumberController,
+              decoration: themedInput('ID Number'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: professorEmailController,
+              decoration: themedInput('Email'),
+              keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 45,
+              child: ElevatedButton.icon(
+                onPressed: _isLoading ? null : addInstructor,
+                icon: const Icon(Icons.person_add),
+                label: Text(_isLoading ? 'Adding...' : 'Add Instructor'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green.shade600,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
               ),
             ),
-
-            const SizedBox(width: 30),
-
-            // Right: Table
+            const SizedBox(height: 24),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Instructors',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 8),
             Expanded(
-              flex: 2,
-              child: _instructors.isEmpty
-                  ? const Center(child: Text("No instructors added yet."))
-                  : _buildInstructorTable(),
+              child: ListView.builder(
+                itemCount: instructors.length,
+                itemBuilder: (context, index) {
+                  final instructor = instructors[index];
+                  return Card(
+                    color: Colors.green.shade50,
+                    margin: const EdgeInsets.symmetric(vertical: 5),
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: ListTile(
+                      leading: const Icon(Icons.person, color: Colors.green),
+                      title: Text(instructor['professor_name']),
+                      subtitle: Text(
+                        '${instructor['id_number']} • ${instructor['professor_email']}',
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () =>
+                            deleteInstructor(instructor['id_number']),
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
           ],
         ),

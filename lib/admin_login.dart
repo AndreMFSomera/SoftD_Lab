@@ -77,10 +77,11 @@ class AdminLoginScreen extends StatelessWidget {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 15),
                           ),
-                          onPressed: () async{
+                          onPressed: () async {
                             final success = await ApiService.login(
                               adminEmailController.text.trim(),
                               adminPasswordController.text.trim(),
+                              "admin",
                             );
                             if (success) {
                               Navigator.push(
@@ -89,7 +90,7 @@ class AdminLoginScreen extends StatelessWidget {
                                   builder: (context) => AdminDashboard(),
                                 ),
                               );
-                            }else{
+                            } else {
                               showDialog(
                                 context: context,
                                 builder: (context) => AlertDialog(
@@ -102,8 +103,8 @@ class AdminLoginScreen extends StatelessWidget {
                                     ),
                                   ],
                                 ),
-                              );        
-                            }    
+                              );
+                            }
                           },
                           child: const Text(
                             'Log in',
