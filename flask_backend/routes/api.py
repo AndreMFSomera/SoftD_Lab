@@ -7,7 +7,7 @@ def get_db_connection():
     return mysql.connector.connect(
         host='localhost',
         user='root',
-        password='',
+        password='160240',
         database='FacultyAttendanceDB'
     )
 
@@ -16,11 +16,12 @@ def login():
     data = request.get_json()
     id_number = data.get('id_number')
     password = data.get('password')
+    role = data.get('role')  # Added role check
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute("SELECT * FROM users WHERE id_number=%s AND password=%s", (id_number, password))
+    cursor.execute("SELECT * FROM users WHERE id_number=%s AND password=%s AND role=%s", (id_number, password, role))
     user = cursor.fetchone()
 
     cursor.close()
@@ -29,8 +30,8 @@ def login():
     if user:
         return jsonify({"status": "success", "message": "Login successful", "user": user})
     else:
-        return jsonify({"status": "error", "message": "Invalid credentials"}), 401
-
+        return jsonify({"status": "error", "message": f"Invalid credentials or not a {role}"}), 401
+    
 @api.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()

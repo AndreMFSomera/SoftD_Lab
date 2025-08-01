@@ -101,6 +101,7 @@ class LoginPage extends StatelessWidget {
                             final success = await ApiService.login(
                               emailController.text.trim(),
                               passwordController.text.trim(),
+                              "checker",
                             );
                             print('Login success: $success');
                             if (success) {
