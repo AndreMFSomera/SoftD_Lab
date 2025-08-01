@@ -10,7 +10,7 @@ def get_db_connection():
         password='160240',
         database='FacultyAttendanceDB'
     )
-
+    
 @api.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -104,70 +104,3 @@ def get_all_instructors():
     finally:
         cursor.close()
         conn.close()
-
-@api.route('/delete_instructor/<id_number>', methods=['DELETE'])
-def delete_instructor(id_number):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM instructors WHERE id_number = %s", (id_number,))
-    conn.commit()
-    conn.close()
-    return jsonify({'message': 'Instructor deleted successfully'}), 200
-
-@api.route('/count_instructors', methods=['GET'])
-def count_instructors():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) FROM instructors")
-    count = cursor.fetchone()[0]
-    cursor.close()
-    conn.close()
-    return jsonify({'instructor_count': count})
-
-@api.route('/checker_count', methods=['GET'])
-def checker_count():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'checker'")
-    count = cursor.fetchone()[0]
-    conn.close()
-    return jsonify({'count': count})
-
-@api.route('/delete_checker/<int:user_id>', methods=['DELETE'])
-def delete_checker(user_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM users WHERE id = %s AND role = 'checker'", (user_id,))
-    conn.commit()
-    conn.close()
-    return jsonify({'message': 'Checker deleted'})
-
-@api.route('/checkers', methods=['GET'])
-def get_checkers():
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT id, full_name, id_number, role, created_at FROM users WHERE role = 'checker'")
-    checkers = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return jsonify(checkers)
-
-@api.route('/users/<int:user_id>', methods=['DELETE'])
-def delete_user(user_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
-    conn.commit()
-    cursor.close()
-    conn.close()
-    return jsonify({'message': 'User deleted successfully'})
-
-# ✅ Renamed to avoid duplicate
-@api.route('/instructor_names', methods=['GET'])
-def get_instructor_names():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT professor_name FROM instructors")
-    instructors = [row[0] for row in cursor.fetchall()]
-    conn.close()
-    return jsonify(instructors)
