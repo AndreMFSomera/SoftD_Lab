@@ -16,14 +16,12 @@ def login():
     data = request.get_json()
     id_number = data.get('id_number')
     password = data.get('password')
-    role = data.get('role')  # Added role check
+    role = data.get('role')
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-
     cursor.execute("SELECT * FROM users WHERE id_number=%s AND password=%s AND role=%s", (id_number, password, role))
     user = cursor.fetchone()
-
     cursor.close()
     conn.close()
 
@@ -31,7 +29,7 @@ def login():
         return jsonify({"status": "success", "message": "Login successful", "user": user})
     else:
         return jsonify({"status": "error", "message": f"Invalid credentials or not a {role}"}), 401
-    
+
 @api.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
@@ -49,10 +47,8 @@ def signup():
         )
         conn.commit()
         return jsonify({"status": "success", "message": "Signup successful"}), 201
-
     except mysql.connector.Error as err:
         return jsonify({"status": "error", "message": str(err)}), 400
-
     finally:
         cursor.close()
         conn.close()
@@ -61,16 +57,12 @@ def signup():
 def count_checkers():
     conn = get_db_connection()
     cursor = conn.cursor()
-
     cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'checker'")
     (count,) = cursor.fetchone()
-
     cursor.close()
     conn.close()
-
     return jsonify({"checker_count": count})
 
-# Get all instructors
 @api.route('/add_instructor', methods=['POST'])
 def add_instructor():
     data = request.get_json()
@@ -99,7 +91,7 @@ def add_instructor():
         conn.close()
 
 @api.route('/get_instructors', methods=['GET'])
-def get_instructors():
+def get_all_instructors():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
@@ -117,24 +109,19 @@ def get_instructors():
 def delete_instructor(id_number):
     conn = get_db_connection()
     cursor = conn.cursor()
-
     cursor.execute("DELETE FROM instructors WHERE id_number = %s", (id_number,))
     conn.commit()
     conn.close()
-
     return jsonify({'message': 'Instructor deleted successfully'}), 200
 
 @api.route('/count_instructors', methods=['GET'])
 def count_instructors():
     conn = get_db_connection()
     cursor = conn.cursor()
-
     cursor.execute("SELECT COUNT(*) FROM instructors")
     count = cursor.fetchone()[0]
-
     cursor.close()
     conn.close()
-
     return jsonify({'instructor_count': count})
 
 @api.route('/checker_count', methods=['GET'])
@@ -175,3 +162,12 @@ def delete_user(user_id):
     conn.close()
     return jsonify({'message': 'User deleted successfully'})
 
+# ✅ Renamed to avoid duplicate
+@api.route('/instructor_names', methods=['GET'])
+def get_instructor_names():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT professor_name FROM instructors")
+    instructors = [row[0] for row in cursor.fetchall()]
+    conn.close()
+    return jsonify(instructors)
