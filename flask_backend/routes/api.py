@@ -299,3 +299,17 @@ def check_name_exists():
     conn.close()
 
     return jsonify({'exists': count > 0})
+
+@api.route('/count_checkers', methods=['GET'])
+def count_checkers():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'checker'")
+        (count,) = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        return jsonify({'checker_count': count})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
