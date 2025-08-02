@@ -38,30 +38,30 @@ def signup():
     password = data.get('password')
 
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(dictionary=True)
 
     try:
+        # ✅ Only check ID uniqueness
+        cursor.execute("SELECT * FROM users WHERE id_number = %s", (id_number,))
+        existing_user = cursor.fetchone()
+
+        if existing_user:
+            return jsonify({"status": "error", "message": "User with this ID already exists"}), 409
+
         cursor.execute(
             "INSERT INTO users (full_name, id_number, password, role) VALUES (%s, %s, %s, %s)",
             (full_name, id_number, password, 'checker')
         )
         conn.commit()
         return jsonify({"status": "success", "message": "Signup successful"}), 201
+
     except mysql.connector.Error as err:
         return jsonify({"status": "error", "message": str(err)}), 400
     finally:
         cursor.close()
         conn.close()
 
-@api.route('/count_checkers', methods=['GET'])
-def count_checkers():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'checker'")
-    (count,) = cursor.fetchone()
-    cursor.close()
-    conn.close()
-    return jsonify({"checker_count": count})
+
 
 @api.route('/add_instructor', methods=['POST'])
 def add_instructor():
@@ -74,15 +74,26 @@ def add_instructor():
         return jsonify({'error': 'Missing fields'}), 400
 
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(dictionary=True)
 
     try:
+        # Check if instructor with same name, id, or email already exists
+        cursor.execute("""
+            SELECT * FROM instructors 
+            WHERE professor_name = %s OR id_number = %s OR professor_email = %s
+        """, (professor_name, id_number, professor_email))
+        existing = cursor.fetchone()
+
+        if existing:
+            return jsonify({'error': 'Instructor already exists'}), 409
+
         cursor.execute("""
             INSERT INTO instructors (professor_name, id_number, professor_email)
             VALUES (%s, %s, %s)
         """, (professor_name, id_number, professor_email))
         conn.commit()
         return jsonify({'message': 'Instructor added'}), 201
+
     except Exception as e:
         conn.rollback()
         return jsonify({'error': str(e)}), 500
@@ -274,3 +285,17 @@ def get_instructor_attendance_summary():
     finally:
         cursor.close()
         conn.close()
+
+@api.route('/check_name_exists', methods=['POST'])
+def check_name_exists():
+    data = request.get_json()
+    full_name = data.get('full_name')
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM users WHERE full_name = %s", (full_name,))
+    (count,) = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    return jsonify({'exists': count > 0})

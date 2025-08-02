@@ -47,26 +47,23 @@ class ApiService {
     }
   }
 
-  static Future<bool> signup(
-    String fullName,
-    String idNumber,
-    String password,
-  ) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/signup'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'full_name': fullName,
-        'id_number': idNumber,
-        'password': password,
-      }),
-    );
+  static Future<bool> signup(String name, String id, String password) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/signup'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'full_name': name, // ✅ matches backend
+              'id_number': id, // ✅ matches backend
+              'password': password,
+            }),
+          )
+          .timeout(const Duration(seconds: 10));
 
-    if (response.statusCode == 201) {
-      return true;
-    } else {
-      print('Signup failed: ${response.body}');
-      return false;
+      return response.statusCode == 201;
+    } catch (e) {
+      throw Exception('Signup request failed: $e');
     }
   }
 
@@ -204,6 +201,21 @@ class ApiService {
       return List<Map<String, dynamic>>.from(json.decode(response.body));
     } else {
       throw Exception('Failed to load instructor attendance summary');
+    }
+  }
+
+  static Future<bool> doesNameExist(String name) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/check_name_exists'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'full_name': name}),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['exists'] == true;
+    } else {
+      throw Exception('Failed to check name');
     }
   }
 }
