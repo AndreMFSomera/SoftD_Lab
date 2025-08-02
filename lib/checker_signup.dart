@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'api_service.dart';
+import 'package:flutter/services.dart';
 
 class SignupPage extends StatelessWidget {
   SignupPage({super.key});
@@ -33,7 +34,7 @@ class SignupPage extends StatelessWidget {
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 10),
                       SizedBox(
                         width: 300,
                         child: TextField(
@@ -50,13 +51,21 @@ class SignupPage extends StatelessWidget {
                           ),
                         ),
                       ),
+
                       const SizedBox(height: 10),
                       SizedBox(
                         width: 300,
                         child: TextField(
                           controller: emailController,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(RegExp(r'[\d-]')),
+                            LengthLimitingTextInputFormatter(
+                              10,
+                            ), // xx-xxxx-xx = 10 chars
+                          ],
                           decoration: InputDecoration(
-                            hintText: 'Faculty Email or ID',
+                            hintText: 'ID (e.g. 22-3734-62)',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
@@ -67,6 +76,7 @@ class SignupPage extends StatelessWidget {
                           ),
                         ),
                       ),
+
                       const SizedBox(height: 10),
                       SizedBox(
                         width: 300,
@@ -117,6 +127,27 @@ class SignupPage extends StatelessWidget {
                           onPressed: () async {
                             final name = nameController.text.trim();
                             final emailOrId = emailController.text.trim();
+                            final idRegex = RegExp(r'^\d{2}-\d{4}-\d{2}$');
+
+                            if (!idRegex.hasMatch(emailOrId)) {
+                              showDialog(
+                                context: context,
+                                builder: (_) => AlertDialog(
+                                  title: const Text('Invalid ID Format'),
+                                  content: const Text(
+                                    'ID must follow the format xx-xxxx-xx, e.g., 22-3734-621',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text('OK'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              return;
+                            }
+
                             final password = passwordController.text.trim();
                             final confirmPassword = confirmPasswordController
                                 .text
