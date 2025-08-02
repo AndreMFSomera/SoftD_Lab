@@ -133,7 +133,9 @@ class ApiService {
   }
 
   static Future<bool> deleteUser(int userId) async {
-    final response = await http.delete(Uri.parse('$baseUrl/users/$userId'));
+    final response = await http.delete(
+      Uri.parse('$baseUrl/delete_checker/$userId'), // 👈 updated route
+    );
     return response.statusCode == 200;
   }
 

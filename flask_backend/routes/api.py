@@ -158,3 +158,47 @@ def get_checkers():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@api.route('/delete_instructor/<id_number>', methods=['DELETE'])
+def delete_instructor(id_number):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Check if the instructor exists first
+        cursor.execute("SELECT * FROM instructors WHERE id_number = %s", (id_number,))
+        if cursor.fetchone() is None:
+            return jsonify({'error': 'Instructor not found'}), 404
+
+        # Perform deletion
+        cursor.execute("DELETE FROM instructors WHERE id_number = %s", (id_number,))
+        conn.commit()
+        return jsonify({'message': 'Instructor deleted successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@api.route('/delete_checker/<int:user_id>', methods=['DELETE'])
+def delete_checker(user_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Check if checker exists
+        cursor.execute("SELECT * FROM users WHERE id = %s AND role = 'checker'", (user_id,))
+        if cursor.fetchone() is None:
+            return jsonify({'error': 'Checker not found'}), 404
+
+        # Delete checker
+        cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+        conn.commit()
+
+        return jsonify({'message': 'Checker deleted successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
