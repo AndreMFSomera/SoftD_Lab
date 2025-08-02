@@ -201,4 +201,76 @@ def delete_checker(user_id):
         cursor.close()
         conn.close()
 
+@api.route('/attendance_records', methods=['GET'])
+def get_attendance_records():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
 
+        cursor.execute("""
+            SELECT id, recorded_by, professor_name, room_number, attendance_status,
+                   DATE_FORMAT(date_recorded, '%Y-%m-%d') AS date_recorded,
+                   TIME_FORMAT(time_recorded, '%H:%i:%s') AS time_recorded
+            FROM attendance_records
+            ORDER BY recorded_at DESC
+        """)
+        records = cursor.fetchall()
+
+        return jsonify(records)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@api.route('/attendance_records/<int:record_id>', methods=['DELETE'])
+def delete_attendance_record(record_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Check if the record exists
+        cursor.execute("SELECT * FROM attendance_records WHERE id = %s", (record_id,))
+        if cursor.fetchone() is None:
+            return jsonify({'error': 'Attendance record not found'}), 404
+
+        # Delete the record
+        cursor.execute("DELETE FROM attendance_records WHERE id = %s", (record_id,))
+        conn.commit()
+
+        return jsonify({'message': 'Attendance record deleted successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@api.route('/instructor_attendance_summary', methods=['GET'])
+def get_instructor_attendance_summary():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+            SELECT 
+                professor_name,
+                SUM(CASE WHEN attendance_status = 'Present' THEN 1 ELSE 0 END) AS present_count,
+                SUM(CASE WHEN attendance_status = 'Absent' THEN 1 ELSE 0 END) AS absent_count,
+                SUM(CASE WHEN attendance_status = 'ODL' THEN 1 ELSE 0 END) AS odl_count
+            FROM attendance_records
+            GROUP BY professor_name
+            ORDER BY professor_name;
+        """
+
+        cursor.execute(query)
+        results = cursor.fetchall()
+
+        return jsonify(results), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()

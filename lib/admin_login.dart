@@ -3,15 +3,33 @@ import 'main.dart';
 import 'admin_dashboard.dart';
 import 'api_service.dart';
 
-class AdminLoginScreen extends StatelessWidget {
-  AdminLoginScreen({super.key});
+class AdminLoginScreen extends StatefulWidget {
+  const AdminLoginScreen({super.key});
 
+  @override
+  State<AdminLoginScreen> createState() => _AdminLoginScreenState();
+}
+
+class _AdminLoginScreenState extends State<AdminLoginScreen> {
   final TextEditingController adminEmailController = TextEditingController();
   final TextEditingController adminPasswordController = TextEditingController();
 
   @override
+  void dispose() {
+    adminEmailController.dispose();
+    adminPasswordController.dispose();
+    super.dispose();
+  }
+
+  void clearLoginFields() {
+    adminEmailController.clear();
+    adminPasswordController.clear();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // everything inside stays the same
       body: Stack(
         children: [
           Row(

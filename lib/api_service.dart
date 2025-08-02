@@ -176,4 +176,34 @@ class ApiService {
 
     return response.statusCode == 200;
   }
+
+  static Future<List<Map<String, dynamic>>> getAttendanceRecords() async {
+    final response = await http.get(Uri.parse('$baseUrl/attendance_records'));
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonData = jsonDecode(response.body);
+      return List<Map<String, dynamic>>.from(jsonData);
+    } else {
+      throw Exception('Failed to load attendance records');
+    }
+  }
+
+  static Future<bool> deleteAttendanceRecord(int id) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/attendance_records/$id'),
+    );
+    return response.statusCode == 200;
+  }
+
+  static Future<List<Map<String, dynamic>>>
+  getInstructorAttendanceSummary() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/instructor_attendance_summary'),
+    );
+
+    if (response.statusCode == 200) {
+      return List<Map<String, dynamic>>.from(json.decode(response.body));
+    } else {
+      throw Exception('Failed to load instructor attendance summary');
+    }
+  }
 }

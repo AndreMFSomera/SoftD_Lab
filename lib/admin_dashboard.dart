@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'add_instructor_page.dart';
 import 'add_checker.dart';
 import 'api_service.dart';
+import 'manage_page.dart';
+import 'admin_login.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -16,10 +18,12 @@ class _AdminDashboardState extends State<AdminDashboard> {
   int checkerCount = 0;
   int instructorCount = 0;
   bool isLoading = true;
+  late Future<List<Map<String, dynamic>>> _instructorSummaryFuture;
 
   final List<String> _titles = [
     'Admin - Dashboard',
     'Admin - Instructors',
+    'Admin - Checkers',
     'Admin - Manage',
   ];
 
@@ -28,6 +32,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
     super.initState();
     _loadCheckerCount();
     fetchInstructorCount();
+    _instructorSummaryFuture = ApiService.getInstructorAttendanceSummary();
+  }
+
+  Future<void> refreshInstructorSummary() async {
+    final updatedSummary = await ApiService.getInstructorAttendanceSummary();
+    if (!mounted) return;
+    setState(() {
+      _instructorSummaryFuture = Future.value(updatedSummary);
+    });
   }
 
   Future<void> fetchInstructorCount() async {
@@ -93,6 +106,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
         }
       });
     }
+
+    if (index == 3) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ManagePage()),
+      ).then((_) {
+        if (mounted) {
+          setState(() {
+            _selectedIndex = 0;
+          });
+          refreshInstructorSummary(); // 👈 Refresh the summary after coming back
+        }
+      });
+    }
   }
 
   @override
@@ -115,7 +142,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
       ),
       body: Row(
         children: [
-          // Sidebar
           Container(
             width: 200,
             color: Colors.green[800],
@@ -124,12 +150,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 const SizedBox(height: 30),
                 _buildNavItem(Icons.dashboard, "Dashboard", 0),
                 _buildNavItem(Icons.person, "Instructors", 1),
-                _buildNavItem(Icons.check, "Manage", 2),
+                _buildNavItem(Icons.check, "Checkers", 2),
+                _buildNavItem(Icons.manage_accounts, "Manage", 3),
               ],
             ),
           ),
-
-          // Main content
           Expanded(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
@@ -211,7 +236,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ),
           const SizedBox(height: 40),
           const Text(
-            "Recent Activities",
+            "Instructor Attendance Summary",
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
@@ -220,10 +245,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ),
           ),
           const SizedBox(height: 10),
-          const Text(
-            "No recent activities.",
-            style: TextStyle(color: Colors.black54, fontFamily: 'Arial'),
-          ),
+          _buildInstructorSummaryTable(),
         ],
       ),
     );
@@ -264,6 +286,46 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
+  Widget _buildInstructorSummaryTable() {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _instructorSummaryFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+            child: Text('No instructor attendance summary available.'),
+          );
+        }
+
+        final data = snapshot.data!;
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
+            columns: const [
+              DataColumn(label: Text('Professor Name')),
+              DataColumn(label: Text('Present')),
+              DataColumn(label: Text('Absent')),
+              DataColumn(label: Text('ODL')),
+            ],
+            rows: data.map((record) {
+              return DataRow(
+                cells: [
+                  DataCell(Text(record['professor_name'] ?? '')),
+                  DataCell(Text(record['present_count'].toString())),
+                  DataCell(Text(record['absent_count'].toString())),
+                  DataCell(Text(record['odl_count'].toString())),
+                ],
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildCheckerPanel() {
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: ApiService.getCheckers(),
@@ -271,7 +333,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
-          return Center(child: Text('Error: \${snapshot.error}'));
+          return Center(child: Text('Error: ${snapshot.error}'));
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const Center(child: Text('No checkers found.'));
         }
@@ -316,7 +378,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 Navigator.of(dialogContext).pop(); // Close the dialog
                 final success = await ApiService.deleteUser(checkerId);
                 if (success && mounted) {
-                  setState(() {}); // Reload UI
+                  setState(() {});
                   _loadCheckerCount();
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -350,17 +412,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
           actions: <Widget>[
             TextButton(
               child: const Text("Cancel"),
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
+              onPressed: () => Navigator.of(dialogContext).pop(),
             ),
             TextButton(
               child: const Text("Logout"),
               onPressed: () {
-                Navigator.of(dialogContext).pop();
-                if (Navigator.canPop(context)) {
-                  Navigator.of(context).pop();
-                }
+                Navigator.of(dialogContext).pop(); // close dialog
+
+                // Reset to login screen and clear fields
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (context) => const AdminLoginScreen(),
+                  ),
+                  (route) => false,
+                );
               },
             ),
           ],

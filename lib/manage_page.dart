@@ -1,60 +1,57 @@
 import 'package:flutter/material.dart';
 import 'api_service.dart';
 
-class CheckerListPage extends StatefulWidget {
-  const CheckerListPage({super.key});
+class ManagePage extends StatefulWidget {
+  const ManagePage({super.key});
 
   @override
-  State<CheckerListPage> createState() => _CheckerListPageState();
+  State<ManagePage> createState() => _ManagePageState();
 }
 
-class _CheckerListPageState extends State<CheckerListPage> {
-  late Future<List<Map<String, dynamic>>> _checkersFuture;
+class _ManagePageState extends State<ManagePage> {
+  late Future<List<Map<String, dynamic>>> _attendanceFuture;
 
   @override
   void initState() {
     super.initState();
-    _loadCheckers();
+    _loadAttendance();
   }
 
-  void _loadCheckers() {
-    setState(() {
-      _checkersFuture = ApiService.getCheckers();
-    });
+  void _loadAttendance() {
+    _attendanceFuture = ApiService.getAttendanceRecords();
+    setState(() {});
   }
 
-  void _deleteChecker(int userId) async {
+  void _deleteAttendance(int recordId) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text("Delete Checker"),
-        content: const Text("Are you sure you want to delete this checker?"),
+        title: const Text("Delete Record"),
+        content: const Text("Are you sure you want to delete this record?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+            child: const Text("Cancel"),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red[600]),
+          TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text("Delete"),
+            child: const Text("Delete", style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
 
     if (confirm == true) {
-      final success = await ApiService.deleteUser(userId);
+      final success = await ApiService.deleteAttendanceRecord(recordId);
       if (success && mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text("Checker deleted")));
-        _loadCheckers();
+        ).showSnackBar(const SnackBar(content: Text("Record deleted")));
+        _loadAttendance();
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("Failed to delete")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to delete record")),
+        );
       }
     }
   }
@@ -66,7 +63,7 @@ class _CheckerListPageState extends State<CheckerListPage> {
       appBar: AppBar(
         backgroundColor: Colors.green[700],
         title: const Text(
-          "Checkers List",
+          "Attendance Records",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         leading: IconButton(
@@ -75,7 +72,7 @@ class _CheckerListPageState extends State<CheckerListPage> {
         ),
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _checkersFuture,
+        future: _attendanceFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -84,23 +81,22 @@ class _CheckerListPageState extends State<CheckerListPage> {
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(
               child: Text(
-                "No checkers found.",
-                style: TextStyle(color: Colors.black54, fontSize: 16),
+                "No attendance records found.",
+                style: TextStyle(fontSize: 16, color: Colors.black54),
               ),
             );
           }
 
-          final checkers = snapshot.data!;
+          final records = snapshot.data!;
 
           return LayoutBuilder(
             builder: (context, constraints) {
               return SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
-                scrollDirection: Axis.vertical,
                 child: ConstrainedBox(
                   constraints: BoxConstraints(minWidth: constraints.maxWidth),
                   child: DataTable(
-                    columnSpacing: 24,
+                    columnSpacing: 12,
                     headingRowColor: MaterialStateProperty.all(
                       Colors.green[200],
                     ),
@@ -113,19 +109,31 @@ class _CheckerListPageState extends State<CheckerListPage> {
                       ),
                       DataColumn(
                         label: Text(
-                          "ID",
+                          "Room",
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
                       DataColumn(
                         label: Text(
-                          "Role",
+                          "Status",
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
                       DataColumn(
                         label: Text(
-                          "Created At",
+                          "By",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          "Date",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          "Time",
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -136,19 +144,19 @@ class _CheckerListPageState extends State<CheckerListPage> {
                         ),
                       ),
                     ],
-                    rows: checkers.map((checker) {
+                    rows: records.map((record) {
                       return DataRow(
                         cells: [
-                          DataCell(Text(checker['full_name'] ?? '')),
-                          DataCell(Text(checker['id_number'] ?? '')),
-                          DataCell(Text(checker['role'] ?? '')),
-                          DataCell(
-                            Text(checker['created_at']?.split('T').first ?? ''),
-                          ),
+                          DataCell(Text(record['professor_name'] ?? '')),
+                          DataCell(Text(record['room_number'] ?? '')),
+                          DataCell(Text(record['attendance_status'] ?? '')),
+                          DataCell(Text(record['recorded_by'] ?? '')),
+                          DataCell(Text(record['date_recorded'] ?? '')),
+                          DataCell(Text(record['time_recorded'] ?? '')),
                           DataCell(
                             IconButton(
                               icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _deleteChecker(checker['id']),
+                              onPressed: () => _deleteAttendance(record['id']),
                             ),
                           ),
                         ],
