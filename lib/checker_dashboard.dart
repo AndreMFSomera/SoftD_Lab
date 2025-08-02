@@ -12,10 +12,12 @@ class CheckerDashboard extends StatefulWidget {
   State<CheckerDashboard> createState() => _CheckerDashboardState();
 }
 
+List<String> roomOptions = ['S213', 'S218', 'S242'];
+String? selectedRoom;
+
 class _CheckerDashboardState extends State<CheckerDashboard> {
   final _formKey = GlobalKey<FormState>();
   String? selectedProfessor;
-  final roomController = TextEditingController();
   String? attendanceStatus;
   DateTime now = DateTime.now();
   List<String> professorNames = [];
@@ -89,14 +91,14 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
       final success = await ApiService.saveAttendance(
         recordedBy: checkerId,
         professorName: selectedProfessor!,
-        roomNumber: roomController.text,
+        roomNumber: selectedRoom!, // ✅ use the dropdown value
         attendanceStatus: attendanceStatus!,
       );
 
       if (success) {
         setState(() {
           selectedProfessor = null;
-          roomController.clear();
+          selectedRoom = null; // ✅ reset dropdown
           attendanceStatus = null;
         });
 
@@ -171,15 +173,27 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
                       value == null ? 'Please select a professor' : null,
                 ),
                 const SizedBox(height: 12),
-                TextFormField(
-                  controller: roomController,
+                DropdownButtonFormField<String>(
+                  value: selectedRoom,
+                  items: roomOptions.map((room) {
+                    return DropdownMenuItem<String>(
+                      value: room,
+                      child: Text(room),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedRoom = value;
+                    });
+                  },
                   decoration: const InputDecoration(
                     labelText: "Room",
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) =>
-                      value == null || value.isEmpty ? 'Required' : null,
+                      value == null ? 'Please select a room' : null,
                 ),
+
                 const SizedBox(height: 12),
                 Row(
                   children: [
