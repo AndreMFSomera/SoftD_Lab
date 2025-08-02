@@ -7,7 +7,7 @@ def get_db_connection():
     return mysql.connector.connect(
         host='localhost',
         user='root',
-        password='',
+        password='160240',
         database='FacultyAttendanceDB'
     )
     
@@ -134,3 +134,27 @@ def save_attendance():
     finally:
         cursor.close()
         conn.close()
+
+@api.route('/count_instructors', methods=['GET'])
+def count_instructors():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM instructors")
+    (count,) = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return jsonify({"instructor_count": count})
+
+@api.route('/checkers', methods=['GET'])
+def get_checkers():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id, full_name, id_number, role, created_at FROM users WHERE role = 'checker'")
+        checkers = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return jsonify(checkers)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
