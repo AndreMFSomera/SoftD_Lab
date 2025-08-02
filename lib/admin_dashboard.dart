@@ -301,26 +301,48 @@ class _AdminDashboardState extends State<AdminDashboard> {
         }
 
         final data = snapshot.data!;
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            columns: const [
-              DataColumn(label: Text('Professor Name')),
-              DataColumn(label: Text('Present')),
-              DataColumn(label: Text('Absent')),
-              DataColumn(label: Text('ODL')),
-            ],
-            rows: data.map((record) {
-              return DataRow(
-                cells: [
-                  DataCell(Text(record['professor_name'] ?? '')),
-                  DataCell(Text(record['present_count'].toString())),
-                  DataCell(Text(record['absent_count'].toString())),
-                  DataCell(Text(record['odl_count'].toString())),
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            return Container(
+              width: constraints.maxWidth,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.2),
+                    spreadRadius: 2,
+                    blurRadius: 5,
+                    offset: const Offset(0, 3),
+                  ),
                 ],
-              );
-            }).toList(),
-          ),
+              ),
+              child: DataTable(
+                columnSpacing:
+                    constraints.maxWidth * 0.05, // adjust based on screen
+                headingRowColor: MaterialStateColor.resolveWith(
+                  (states) => Colors.green.shade100,
+                ),
+                columns: const [
+                  DataColumn(label: Expanded(child: Text('Professor Name'))),
+                  DataColumn(label: Expanded(child: Text('Present'))),
+                  DataColumn(label: Expanded(child: Text('Absent'))),
+                  DataColumn(label: Expanded(child: Text('ODL'))),
+                ],
+                rows: data.map((record) {
+                  return DataRow(
+                    cells: [
+                      DataCell(Text(record['professor_name'] ?? '')),
+                      DataCell(Text(record['present_count'].toString())),
+                      DataCell(Text(record['absent_count'].toString())),
+                      DataCell(Text(record['odl_count'].toString())),
+                    ],
+                  );
+                }).toList(),
+              ),
+            );
+          },
         );
       },
     );
