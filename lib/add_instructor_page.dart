@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -42,12 +43,50 @@ class _AddInstructorPageState extends State<AddInstructorPage> {
   }
 
   Future<void> addInstructor() async {
-    final professorName = professorNameController.text.trim();
+    String professorName = professorNameController.text.trim();
     final idNumber = idNumberController.text.trim();
     final professorEmail = professorEmailController.text.trim();
 
     if (professorName.isEmpty || idNumber.isEmpty || professorEmail.isEmpty) {
       showError('Please fill in all fields.');
+      return;
+    }
+
+    // Check if full name is numeric only
+    if (RegExp(r'^\d+$').hasMatch(professorName)) {
+      showError('Full name cannot be only numbers.');
+      return;
+    }
+
+    // Convert professor name to lowercase
+    professorName = professorName.toLowerCase();
+
+    final idRegex = RegExp(r'^\d{2}-\d{4}-\d{3}$');
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+
+    if (!idRegex.hasMatch(idNumber)) {
+      showError('ID number must be in the format xx-xxxx-xxx.');
+      return;
+    }
+
+    if (!emailRegex.hasMatch(professorEmail)) {
+      showError('Please enter a valid email address.');
+      return;
+    }
+
+    final duplicate = instructors.any(
+      (instructor) =>
+          instructor['professor_name'].toString().toLowerCase() ==
+              professorName ||
+          instructor['id_number'].toString() == idNumber ||
+          instructor['professor_email'].toString().toLowerCase() ==
+              professorEmail.toLowerCase(),
+    );
+
+    if (duplicate) {
+      showError(
+        'Instructor already exists (name, ID, or email is already used).',
+      );
       return;
     }
 
@@ -171,7 +210,13 @@ class _AddInstructorPageState extends State<AddInstructorPage> {
             const SizedBox(height: 12),
             TextField(
               controller: idNumberController,
-              decoration: themedInput('ID Number'),
+              decoration: themedInput('ID Number (xx-xxxx-xxx)'),
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(9),
+                _CustomIdFormatter(),
+              ],
             ),
             const SizedBox(height: 12),
             TextField(
@@ -236,6 +281,29 @@ class _AddInstructorPageState extends State<AddInstructorPage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+// Formatter for ID: xx-xxxx-xxx
+class _CustomIdFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    final buffer = StringBuffer();
+
+    for (int i = 0; i < digits.length; i++) {
+      buffer.write(digits[i]);
+      if (i == 1 || i == 5) buffer.write('-');
+    }
+
+    final formatted = buffer.toString();
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }
