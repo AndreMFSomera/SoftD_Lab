@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:softd/main.dart';
 import 'api_service.dart';
 
 class SignupPage extends StatefulWidget {
@@ -35,20 +36,6 @@ class _SignupPageState extends State<SignupPage> {
   });
 
   @override
-  void initState() {
-    super.initState();
-    nameController.addListener(() {
-      final currentText = nameController.text;
-      if (currentText != currentText.toLowerCase()) {
-        nameController.value = nameController.value.copyWith(
-          text: currentText.toLowerCase(),
-          selection: TextSelection.collapsed(offset: currentText.length),
-        );
-      }
-    });
-  }
-
-  @override
   void dispose() {
     nameController.dispose();
     idController.dispose();
@@ -62,6 +49,7 @@ class _SignupPageState extends State<SignupPage> {
     return Scaffold(
       body: Row(
         children: [
+          // Left Panel - Form
           Expanded(
             flex: 2,
             child: Padding(
@@ -80,91 +68,35 @@ class _SignupPageState extends State<SignupPage> {
                     ),
                     const SizedBox(height: 10),
 
-                    // Name field
-                    SizedBox(
-                      width: 300,
-                      child: TextField(
-                        controller: nameController,
-                        decoration: InputDecoration(
-                          hintText: 'Full Name',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 15,
-                            horizontal: 20,
-                          ),
-                        ),
-                      ),
+                    _buildTextField('Full Name', nameController),
+                    const SizedBox(height: 10),
+
+                    _buildTextField(
+                      'ID (e.g. 22-3734-621)',
+                      idController,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        _idFormatter,
+                        LengthLimitingTextInputFormatter(11),
+                      ],
+                      keyboardType: TextInputType.number,
                     ),
                     const SizedBox(height: 10),
 
-                    // ID field
-                    SizedBox(
-                      width: 300,
-                      child: TextField(
-                        controller: idController,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          _idFormatter,
-                          LengthLimitingTextInputFormatter(11),
-                        ],
-                        decoration: InputDecoration(
-                          hintText: 'ID (e.g. 22-3734-621)',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 15,
-                            horizontal: 20,
-                          ),
-                        ),
-                      ),
+                    _buildTextField(
+                      'Password',
+                      passwordController,
+                      obscureText: true,
                     ),
                     const SizedBox(height: 10),
 
-                    // Password
-                    SizedBox(
-                      width: 300,
-                      child: TextField(
-                        controller: passwordController,
-                        obscureText: true,
-                        decoration: InputDecoration(
-                          hintText: 'Password',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 15,
-                            horizontal: 20,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-
-                    // Confirm Password
-                    SizedBox(
-                      width: 300,
-                      child: TextField(
-                        controller: confirmPasswordController,
-                        obscureText: true,
-                        decoration: InputDecoration(
-                          hintText: 'Confirm Password',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 15,
-                            horizontal: 20,
-                          ),
-                        ),
-                      ),
+                    _buildTextField(
+                      'Confirm Password',
+                      confirmPasswordController,
+                      obscureText: true,
                     ),
                     const SizedBox(height: 20),
 
-                    // Sign Up Button
                     SizedBox(
                       width: 300,
                       child: ElevatedButton(
@@ -175,117 +107,7 @@ class _SignupPageState extends State<SignupPage> {
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 15),
                         ),
-                        onPressed: () async {
-                          final name = nameController.text.trim();
-                          final id = idController.text.trim();
-                          final password = passwordController.text.trim();
-                          final confirmPassword = confirmPasswordController.text
-                              .trim();
-
-                          final idRegex = RegExp(r'^\d{2}-\d{4}-\d{3}$');
-                          final nameRegex = RegExp(r'^[^0-9]+$');
-
-                          if (!idRegex.hasMatch(id)) {
-                            _showDialog(
-                              context,
-                              'Invalid ID Format',
-                              'ID must follow the format xx-xxxx-xxx',
-                            );
-                            return;
-                          }
-
-                          if (!nameRegex.hasMatch(name)) {
-                            _showDialog(
-                              context,
-                              'Invalid Name',
-                              'Name must not contain numbers.',
-                            );
-                            return;
-                          }
-
-                          if (password != confirmPassword) {
-                            _showDialog(
-                              context,
-                              'Password Error',
-                              'Passwords do not match.',
-                            );
-                            return;
-                          }
-
-                          showDialog(
-                            context: context,
-                            barrierDismissible: false,
-                            builder: (_) => const Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                          );
-
-                          try {
-                            // ✅ Check if name already exists in the backend
-                            final nameExists = await ApiService.doesNameExist(
-                              name,
-                            );
-
-                            if (nameExists) {
-                              if (context.mounted)
-                                Navigator.pop(context); // close loading spinner
-                              _showDialog(
-                                context,
-                                'Duplicate Name',
-                                'An account with this full name already exists.',
-                              );
-                              return;
-                            }
-
-                            final success = await ApiService.signup(
-                              name,
-                              id,
-                              password,
-                            );
-                            if (context.mounted) Navigator.pop(context);
-
-                            if (success) {
-                              if (context.mounted) {
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext dialogContext) =>
-                                      AlertDialog(
-                                        title: const Text('Success'),
-                                        content: const Text(
-                                          'Account created successfully.',
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.pop(
-                                                dialogContext,
-                                              ); // close dialog
-                                            },
-                                            child: const Text('OK'),
-                                          ),
-                                        ],
-                                      ),
-                                );
-                              }
-                            } else {
-                              if (context.mounted) {
-                                _showDialog(
-                                  context,
-                                  'Signup Failed',
-                                  'ID might already exist.',
-                                );
-                              }
-                            }
-                          } catch (e) {
-                            if (context.mounted) Navigator.pop(context);
-                            _showDialog(
-                              context,
-                              'Network Error',
-                              'Something went wrong: $e',
-                            );
-                          }
-                        },
-
+                        onPressed: _handleSignUp,
                         child: const Text(
                           'Sign Up',
                           style: TextStyle(fontSize: 18),
@@ -293,9 +115,10 @@ class _SignupPageState extends State<SignupPage> {
                       ),
                     ),
                     const SizedBox(height: 10),
-
                     TextButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
                       child: const Text(
                         'Already have an account? Log in',
                         style: TextStyle(color: Colors.blue),
@@ -307,7 +130,7 @@ class _SignupPageState extends State<SignupPage> {
             ),
           ),
 
-          // Right side panel
+          // Right Panel - Info
           Expanded(
             flex: 1,
             child: Container(
@@ -335,7 +158,124 @@ class _SignupPageState extends State<SignupPage> {
     );
   }
 
-  void _showDialog(BuildContext context, String title, String message) {
+  Widget _buildTextField(
+    String hint,
+    TextEditingController controller, {
+    bool obscureText = false,
+    List<TextInputFormatter>? inputFormatters,
+    TextInputType? keyboardType,
+  }) {
+    return SizedBox(
+      width: 300,
+      child: TextField(
+        controller: controller,
+        obscureText: obscureText,
+        inputFormatters: inputFormatters,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          hintText: hint,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 15,
+            horizontal: 20,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleSignUp() async {
+    FocusScope.of(context).unfocus(); // Close keyboard
+
+    final name = nameController.text.trim();
+    final id = idController.text.trim();
+    final password = passwordController.text.trim();
+    final confirmPassword = confirmPasswordController.text.trim();
+
+    final idRegex = RegExp(r'^\d{2}-\d{4}-\d{3}$');
+    final nameRegex = RegExp(r'^[^0-9]+$');
+
+    if (!idRegex.hasMatch(id)) {
+      _showDialog('Invalid ID Format', 'ID must follow the format xx-xxxx-xxx');
+      return;
+    }
+
+    if (!nameRegex.hasMatch(name)) {
+      _showDialog('Invalid Name', 'Name must not contain numbers.');
+      return;
+    }
+
+    if (password != confirmPassword) {
+      _showDialog('Password Error', 'Passwords do not match.');
+      return;
+    }
+
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final nameExists = await ApiService.doesNameExist(name);
+      if (nameExists) {
+        if (context.mounted) {
+          Navigator.of(context, rootNavigator: true).pop(); // close loading
+          _showDialog(
+            'Duplicate Name',
+            'An account with this full name already exists.',
+          );
+        }
+        return;
+      }
+
+      final success = await ApiService.signup(name, id, password);
+
+      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
+
+      if (success) {
+        if (context.mounted) {
+          showDialog(
+            context: context,
+            builder: (BuildContext dialogContext) => AlertDialog(
+              title: const Text('Success'),
+              content: const Text('Account created successfully.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(
+                      dialogContext,
+                      rootNavigator: true,
+                    ).pop(); // Close dialog
+                    Navigator.of(
+                      context,
+                      rootNavigator: true,
+                    ).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => LoginPage()),
+                      (route) => false,
+                    );
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+        }
+      } else {
+        if (context.mounted) {
+          _showDialog('Signup Failed', 'ID might already exist.');
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop(); // close loading
+        _showDialog('Network Error', 'Something went wrong: $e');
+      }
+    }
+  }
+
+  void _showDialog(String title, String message) {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
@@ -344,7 +284,7 @@ class _SignupPageState extends State<SignupPage> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(dialogContext); // close dialog
+              Navigator.of(dialogContext, rootNavigator: true).pop();
             },
             child: const Text('OK'),
           ),
