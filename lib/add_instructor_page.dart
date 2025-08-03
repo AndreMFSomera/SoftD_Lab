@@ -23,6 +23,19 @@ class _AddInstructorPageState extends State<AddInstructorPage> {
   void initState() {
     super.initState();
     fetchInstructors();
+
+    // Automatically lowercase professor name input
+    professorNameController.addListener(() {
+      final text = professorNameController.text;
+      final lower = text.toLowerCase();
+      if (text != lower) {
+        final cursorPos = professorNameController.selection;
+        professorNameController.value = TextEditingValue(
+          text: lower,
+          selection: cursorPos,
+        );
+      }
+    });
   }
 
   Future<void> fetchInstructors() async {
@@ -52,13 +65,11 @@ class _AddInstructorPageState extends State<AddInstructorPage> {
       return;
     }
 
-    // Check if full name is numeric only
     if (RegExp(r'^\d+$').hasMatch(professorName)) {
       showError('Full name cannot be only numbers.');
       return;
     }
 
-    // Convert professor name to lowercase
     professorName = professorName.toLowerCase();
 
     final idRegex = RegExp(r'^\d{2}-\d{4}-\d{3}$');
@@ -177,18 +188,25 @@ class _AddInstructorPageState extends State<AddInstructorPage> {
   InputDecoration themedInput(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: Colors.green),
       filled: true,
       fillColor: Colors.green.shade50,
       enabledBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: Colors.green),
+        borderSide: const BorderSide(color: Colors.black),
         borderRadius: BorderRadius.circular(10),
       ),
       focusedBorder: OutlineInputBorder(
-        borderSide: const BorderSide(color: Colors.green, width: 2),
+        borderSide: const BorderSide(color: Colors.black, width: 2),
         borderRadius: BorderRadius.circular(10),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    professorNameController.dispose();
+    idNumberController.dispose();
+    professorEmailController.dispose();
+    super.dispose();
   }
 
   @override
@@ -285,7 +303,7 @@ class _AddInstructorPageState extends State<AddInstructorPage> {
   }
 }
 
-// Formatter for ID: xx-xxxx-xxx
+// Custom formatter for ID format: xx-xxxx-xxx
 class _CustomIdFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(

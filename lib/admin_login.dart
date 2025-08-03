@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'main.dart';
 import 'admin_dashboard.dart';
 import 'api_service.dart';
@@ -29,7 +30,6 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // everything inside stays the same
       body: Stack(
         children: [
           Row(
@@ -54,8 +54,16 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         width: 300,
                         child: TextField(
                           controller: adminEmailController,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[0-9\-]'),
+                            ),
+                            LengthLimitingTextInputFormatter(11),
+                            _AdminIdInputFormatter(),
+                          ],
                           decoration: InputDecoration(
-                            hintText: 'Admin ID',
+                            hintText: 'Admin ID (xx-xxxx-xxx)',
                             contentPadding: const EdgeInsets.symmetric(
                               vertical: 15,
                               horizontal: 20,
@@ -96,11 +104,36 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 15),
                           ),
                           onPressed: () async {
+                            final id = adminEmailController.text.trim();
+                            final password = adminPasswordController.text
+                                .trim();
+
+                            // Optional validation before API call
+                            if (!RegExp(r'^\d{2}-\d{4}-\d{3}$').hasMatch(id)) {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: Text('Invalid ID Format'),
+                                  content: Text(
+                                    'Admin ID must be in the format xx-xxxx-xxx.',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: Text('OK'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              return;
+                            }
+
                             final success = await ApiService.login(
-                              adminEmailController.text.trim(),
-                              adminPasswordController.text.trim(),
+                              id,
+                              password,
                               "admin",
                             );
+
                             if (success) {
                               Navigator.push(
                                 context,
@@ -192,6 +225,28 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+// Custom input formatter to format input as xx-xxxx-xxx
+class _AdminIdInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    String digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    StringBuffer buffer = StringBuffer();
+
+    for (int i = 0; i < digits.length && i < 9; i++) {
+      buffer.write(digits[i]);
+      if (i == 1 || i == 5) buffer.write('-');
+    }
+
+    return TextEditingValue(
+      text: buffer.toString(),
+      selection: TextSelection.collapsed(offset: buffer.length),
     );
   }
 }

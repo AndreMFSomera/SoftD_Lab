@@ -64,13 +64,20 @@ class _ManagePageState extends State<ManagePage> {
         backgroundColor: Colors.green[700],
         title: const Text(
           "Attendance Records",
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white, // Ensures title text is white
+          ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+          ), // Set icon color to white
           onPressed: () => Navigator.pop(context),
         ),
       ),
+
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _attendanceFuture,
         builder: (context, snapshot) {

@@ -67,10 +67,16 @@ class _CheckerListPageState extends State<CheckerListPage> {
         backgroundColor: Colors.green[700],
         title: const Text(
           "Checkers List",
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white, // 👈 AppBar title in white
+          ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+          ), // 👈 Back button in white
           onPressed: () => Navigator.pop(context),
         ),
       ),

@@ -302,12 +302,23 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         centerTitle: true,
-        title: const Text("Checker Dashboard"),
         backgroundColor: Colors.green[700],
+        title: const Text(
+          "CHECKER DASHBOARD",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 2,
+            fontFamily: 'Arial',
+            color: Colors.white,
+          ),
+        ),
         actions: [
-          IconButton(icon: const Icon(Icons.logout), onPressed: _confirmLogout),
+          IconButton(icon: Icon(Icons.logout), onPressed: _confirmLogout),
         ],
       ),
+
       body: Container(
         width: double.infinity,
         alignment: Alignment.center,

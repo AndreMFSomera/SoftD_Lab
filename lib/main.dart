@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:softd/checker_dashboard.dart';
 import 'admin_login.dart';
 import 'checker_signup.dart';
@@ -56,8 +57,16 @@ class LoginPage extends StatelessWidget {
                         width: 300,
                         child: TextField(
                           controller: emailController,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'[0-9\-]'),
+                            ),
+                            LengthLimitingTextInputFormatter(11),
+                            _FacultyIdInputFormatter(),
+                          ],
                           decoration: InputDecoration(
-                            hintText: 'Faculty ID Number',
+                            hintText: 'Faculty ID Number (xx-xxxx-xxx)',
                             contentPadding: const EdgeInsets.symmetric(
                               vertical: 15,
                               horizontal: 20,
@@ -98,17 +107,41 @@ class LoginPage extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(vertical: 15),
                           ),
                           onPressed: () async {
-                            print('Attempting login...');
                             final idNumber = emailController.text.trim();
+                            final password = passwordController.text.trim();
+
+                            // Validate format before API call
+                            if (!RegExp(
+                              r'^\d{2}-\d{4}-\d{3}$',
+                            ).hasMatch(idNumber)) {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Invalid ID Format'),
+                                  content: const Text(
+                                    'Faculty ID must be in the format xx-xxxx-xxx.',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text('OK'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              return;
+                            }
+
                             final success = await ApiService.login(
-                              emailController.text.trim(),
-                              passwordController.text.trim(),
+                              idNumber,
+                              password,
                               "checker",
                             );
-                            print('Login success: $success');
+
                             if (success) {
-                              final prefs = await SharedPreferences.getInstance();
-                               await prefs.setString('id_number', idNumber);
+                              final prefs =
+                                  await SharedPreferences.getInstance();
+                              await prefs.setString('id_number', idNumber);
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -119,12 +152,14 @@ class LoginPage extends StatelessWidget {
                               showDialog(
                                 context: context,
                                 builder: (context) => AlertDialog(
-                                  title: Text('Login Failed'),
-                                  content: Text('Invalid ID or password.'),
+                                  title: const Text('Login Failed'),
+                                  content: const Text(
+                                    'Invalid ID or password.',
+                                  ),
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.pop(context),
-                                      child: Text('OK'),
+                                      child: const Text('OK'),
                                     ),
                                   ],
                                 ),
@@ -143,7 +178,7 @@ class LoginPage extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => AdminLoginScreen(),
+                              builder: (context) => const AdminLoginScreen(),
                             ),
                           );
                         },
@@ -191,7 +226,7 @@ class LoginPage extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => SignupPage(),
+                              builder: (context) => const SignupPage(),
                             ),
                           );
                         },
@@ -228,6 +263,28 @@ class LoginPage extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// Custom input formatter to format input as xx-xxxx-xxx
+class _FacultyIdInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    String digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    StringBuffer buffer = StringBuffer();
+
+    for (int i = 0; i < digits.length && i < 9; i++) {
+      buffer.write(digits[i]);
+      if (i == 1 || i == 5) buffer.write('-');
+    }
+
+    return TextEditingValue(
+      text: buffer.toString(),
+      selection: TextSelection.collapsed(offset: buffer.length),
     );
   }
 }

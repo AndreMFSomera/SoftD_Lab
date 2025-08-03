@@ -248,21 +248,23 @@ class _SignupPageState extends State<SignupPage> {
                               if (context.mounted) {
                                 showDialog(
                                   context: context,
-                                  builder: (_) => AlertDialog(
-                                    title: const Text('Success'),
-                                    content: const Text(
-                                      'Account created successfully.',
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                          Navigator.pop(context);
-                                        },
-                                        child: const Text('OK'),
+                                  builder: (BuildContext dialogContext) =>
+                                      AlertDialog(
+                                        title: const Text('Success'),
+                                        content: const Text(
+                                          'Account created successfully.',
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.pop(
+                                                dialogContext,
+                                              ); // close dialog
+                                            },
+                                            child: const Text('OK'),
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
                                 );
                               }
                             } else {
@@ -270,7 +272,7 @@ class _SignupPageState extends State<SignupPage> {
                                 _showDialog(
                                   context,
                                   'Signup Failed',
-                                  'Name or ID might already exist.',
+                                  'ID might already exist.',
                                 );
                               }
                             }
@@ -336,12 +338,14 @@ class _SignupPageState extends State<SignupPage> {
   void _showDialog(BuildContext context, String title, String message) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (BuildContext dialogContext) => AlertDialog(
         title: Text(title),
         content: Text(message),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              Navigator.pop(dialogContext); // close dialog
+            },
             child: const Text('OK'),
           ),
         ],

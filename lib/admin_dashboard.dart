@@ -21,7 +21,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   late Future<List<Map<String, dynamic>>> _instructorSummaryFuture;
 
   final List<String> _titles = [
-    'Admin - Dashboard',
+    'Admin Dashboard',
     'Admin - Instructors',
     'Admin - Checkers',
     'Admin - Manage',
@@ -129,10 +129,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: Colors.green[700],
-        title: Text(
-          _titles[_selectedIndex],
-          style: const TextStyle(fontFamily: 'Arial'),
+        title: Center(
+          child: Text(
+            _titles[_selectedIndex].toUpperCase(),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontFamily: 'Arial',
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              letterSpacing: 2,
+              color: Color.fromARGB(255, 255, 255, 255),
+            ),
+          ),
         ),
+
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
