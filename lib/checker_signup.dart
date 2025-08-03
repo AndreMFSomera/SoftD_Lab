@@ -36,6 +36,25 @@ class _SignupPageState extends State<SignupPage> {
   });
 
   @override
+  void initState() {
+    super.initState();
+
+    // Convert name input to lowercase in real-time
+    nameController.addListener(() {
+      final currentText = nameController.text;
+      final lowerText = currentText.toLowerCase();
+
+      if (currentText != lowerText) {
+        final cursorPosition = nameController.selection;
+        nameController.value = TextEditingValue(
+          text: lowerText,
+          selection: cursorPosition,
+        );
+      }
+    });
+  }
+
+  @override
   void dispose() {
     nameController.dispose();
     idController.dispose();
@@ -210,7 +229,6 @@ class _SignupPageState extends State<SignupPage> {
       return;
     }
 
-    // Show loading
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -244,10 +262,7 @@ class _SignupPageState extends State<SignupPage> {
               actions: [
                 TextButton(
                   onPressed: () {
-                    Navigator.of(
-                      dialogContext,
-                      rootNavigator: true,
-                    ).pop(); // Close dialog
+                    Navigator.of(dialogContext, rootNavigator: true).pop();
                     Navigator.of(
                       context,
                       rootNavigator: true,
