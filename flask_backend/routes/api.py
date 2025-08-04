@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 import mysql.connector
+from datetime import datetime
 from datetime import timedelta
 
 api = Blueprint('api', __name__)
@@ -321,6 +322,12 @@ def add_schedule():
     cursor = conn.cursor()
 
     try:
+        def clean_time(time_str):
+            return time_str.split('.')[0] if '.' in time_str else time_str
+
+        starting_time = clean_time(data['starting_time'])
+        ending_time = clean_time(data['ending_time'])
+
         query = """
         INSERT INTO Schedule_record (professor_name, room_number, day, starting_time, ending_time, subject_name)
         VALUES (%s, %s, %s, %s, %s, %s)
@@ -329,8 +336,8 @@ def add_schedule():
             data['professor_name'],
             data['room_number'],
             data['day'],
-            data['starting_time'],
-            data['ending_time'],
+            starting_time,
+            ending_time,
             data['subject_name']
         )
 
@@ -344,7 +351,6 @@ def add_schedule():
     finally:
         cursor.close()
         conn.close()
-
 
 
 @api.route('/delete_schedule/<int:schedule_id>', methods=['DELETE'])
@@ -406,3 +412,117 @@ def get_rooms():
     finally:
         cursor.close()
         conn.close()
+
+@api.route('/get_valid_rooms', methods=['GET'])
+def get_valid_rooms():
+    from datetime import datetime
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        now = datetime.now()
+        current_time = now.strftime('%H:%M:%S')
+
+        weekday = now.weekday()
+        if weekday in [0, 2, 4]:
+            current_day = 'MWF'
+        elif weekday in [1, 3, 5]:
+            current_day = 'TTHS'
+        else:
+            return jsonify([])
+
+        cursor.execute("""
+            SELECT DISTINCT room_number 
+            FROM Schedule_record 
+            WHERE day = %s AND %s BETWEEN starting_time AND ending_time
+        """, (current_day, current_time))
+
+        rooms = [row['room_number'] for row in cursor.fetchall()]
+        return jsonify(rooms), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@api.route('/get_valid_schedules', methods=['GET'])
+def get_valid_schedules():
+    from datetime import datetime
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        now = datetime.now()
+        current_time = now.strftime('%H:%M:%S')
+
+        weekday = now.weekday()  # 0 = Monday, 1 = Tuesday, ..., 6 = Sunday
+        if weekday in [0, 2, 4]:  # Mon, Wed, Fri
+            current_day = 'MWF'
+        elif weekday in [1, 3, 5]:  # Tue, Thu, Sat
+            current_day = 'TTHS'
+        else:
+            return jsonify([])  # Sunday, no classes
+
+        query = """
+            SELECT professor_name, room_number, subject_name, day, starting_time, ending_time
+            FROM schedule_record
+            WHERE day = %s AND %s BETWEEN starting_time AND ending_time
+        """
+        cursor.execute(query, (current_day, current_time))
+        rows = cursor.fetchall()
+
+        result = []
+        for row in rows:
+            result.append({
+                'professor_name': row['professor_name'],
+                'room_number': row['room_number'],
+                'subject_name': row['subject_name'],
+                'day': row['day'],
+                'starting_time': str(row['starting_time']),
+                'ending_time': str(row['ending_time']),
+            })
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@api.route('/get_filtered_professors', methods=['POST'])
+def get_filtered_professors():
+    data = request.get_json()
+    day = data['day']
+    time = data['time']
+    room_number = data['room_number']
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    query = """
+    SELECT DISTINCT professor_name FROM Schedule_record
+    WHERE day = %s AND %s BETWEEN starting_time AND ending_time AND room_number = %s
+    """
+    cursor.execute(query, (day, time, room_number))
+    results = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    professors = [row[0] for row in results]
+    return jsonify({'professors': professors})
+
+# In your api.py
+@api.route('/get_subjects', methods=['GET'])
+def get_subjects():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT DISTINCT subject_name FROM Schedule_record")
+    subjects = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    subject_list = [row[0] for row in subjects]
+    return jsonify(subject_list)

@@ -160,6 +160,7 @@ class ApiService {
     required String roomNumber,
     required String subjectName, // ✅ Add this line
     required String attendanceStatus,
+    required String scheduleTime, // ⬅️ Add this
   }) async {
     final url = Uri.parse('$baseUrl/save_attendance');
     final response = await http.post(
@@ -171,6 +172,7 @@ class ApiService {
         'room_number': roomNumber,
         'subject_name': subjectName, // ✅ Send to backend
         'attendance_status': attendanceStatus,
+        'schedule_time': scheduleTime, // ⬅️ Add this
       }),
     );
 
@@ -235,6 +237,60 @@ class ApiService {
       return data.map((room) => room.toString()).toList();
     } else {
       throw Exception('Failed to load rooms');
+    }
+  }
+
+  static Future<List<String>> getValidRooms() async {
+    final response = await http.get(Uri.parse('$baseUrl/get_valid_rooms'));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((room) => room.toString()).toList();
+    } else {
+      throw Exception('Failed to load valid rooms');
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> fetchValidSchedules() async {
+    final response = await http.get(Uri.parse('$baseUrl/get_valid_schedules'));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+
+      return data.map((schedule) {
+        return {
+          "professor_name": schedule["professor_name"],
+          "room_number": schedule["room_number"],
+          "day": schedule["day"],
+          "subject_name": schedule["subject_name"],
+          "starting_time": schedule["starting_time"],
+          "ending_time": schedule["ending_time"],
+          "schedule_time":
+              "${schedule['starting_time']}-${schedule['ending_time']}",
+        };
+      }).toList();
+    } else {
+      throw Exception("Failed to fetch valid schedules");
+    }
+  }
+
+  static Future<List<String>> fetchProfessorsForRoom({
+    required String room,
+    required String day,
+    required String time,
+  }) async {
+    final url = Uri.parse('$baseUrl/get_filtered_professors');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'room_number': room, 'day': day, 'time': time}),
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return List<String>.from(data['professors']);
+    } else {
+      throw Exception('Failed to load professors: ${response.body}');
     }
   }
 }

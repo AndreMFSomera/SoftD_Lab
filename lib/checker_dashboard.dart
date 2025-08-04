@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:softd/api_service.dart';
 import 'package:softd/main.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class CheckerDashboard extends StatefulWidget {
   const CheckerDashboard({super.key});
@@ -20,54 +20,123 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
   String? selectedProfessor;
   String? selectedRoom;
   String? attendanceStatus;
+  String? selectedSubject;
+  String? selectedTime;
 
+  List<String> scheduleTimes = [];
   List<String> professorNames = [];
   List<String> roomOptions = [];
+  List<String> subjectOptions = [];
+  List<Map<String, dynamic>> validSchedules = [];
+
+  String _getDayCode(int weekday) {
+    switch (weekday) {
+      case DateTime.monday:
+      case DateTime.wednesday:
+      case DateTime.friday:
+        return 'MWF';
+      case DateTime.tuesday:
+      case DateTime.thursday:
+      case DateTime.saturday:
+        return 'TTHS';
+      default:
+        return '';
+    }
+  }
+
+  bool _isTimeInRange(String currentTime, String startTime, String endTime) {
+    int current = _toMinutes(currentTime);
+    int start = _toMinutes(startTime);
+    int end = _toMinutes(endTime);
+    return current >= start && current <= end;
+  }
+
+  int _toMinutes(String time) {
+    final parts = time.split(':');
+    return int.parse(parts[0]) * 60 + int.parse(parts[1]);
+  }
+
+  void loadValidScheduleOptions() async {
+    try {
+      final schedules = await ApiService.fetchValidSchedules();
+      print('Fetched schedules: $schedules');
+
+      DateTime now = DateTime.now();
+      String currentDay = _getDayCode(now.weekday).toUpperCase();
+      String currentTime =
+          "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
+
+      print("System Now: $currentDay $currentTime");
+
+      // Filter schedules strictly by day and time
+      final filtered = schedules.where((schedule) {
+        String scheduleDay = (schedule['day'] ?? '').trim().toUpperCase();
+        String startTime = (schedule['starting_time'] ?? '').substring(0, 5);
+        String endTime = (schedule['ending_time'] ?? '').substring(0, 5);
+
+        bool isDayMatch = scheduleDay == currentDay;
+        bool isTimeMatch = _isTimeInRange(currentTime, startTime, endTime);
+
+        print(
+          "Checking schedule -> Day: $scheduleDay | Start: $startTime | End: $endTime | Room: ${schedule['room_number']}",
+        );
+        print("   Day match: $isDayMatch | Time match: $isTimeMatch");
+
+        return isDayMatch && isTimeMatch;
+      }).toList();
+
+      final validRooms = filtered
+          .map((e) => e['room_number'].toString())
+          .toSet()
+          .toList();
+
+      print("Valid Rooms: $validRooms");
+
+      setState(() {
+        validSchedules = List<Map<String, dynamic>>.from(filtered);
+        roomOptions = validRooms; // ✅ only valid rooms
+        selectedRoom = null; // clear selection if invalid
+        professorNames = [];
+        subjectOptions = [];
+        scheduleTimes = [];
+      });
+    } catch (e) {
+      print("Error loading schedules: $e");
+    }
+  }
+
+  // ✅ fetchSubjects should be here (outside loadValidScheduleOptions)
+  Future<void> fetchSubjects() async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://192.168.1.191:5000/get_subjects'),
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          subjectOptions = data.cast<String>();
+        });
+      } else {
+        print("Failed to fetch subjects");
+      }
+    } catch (e) {
+      print("Error fetching subjects: $e");
+    }
+  }
 
   DateTime now = DateTime.now();
 
   @override
   void initState() {
     super.initState();
-    fetchProfessors();
-    fetchRooms();
+    loadValidScheduleOptions(); // Load filtered professors/rooms/subjects based on current time
+    fetchSubjects();
   }
 
   @override
   void dispose() {
     _subjectController.dispose();
     super.dispose();
-  }
-
-  Future<void> fetchProfessors() async {
-    try {
-      final response = await http.get(
-        Uri.parse('http://localhost:5000/get_instructors'),
-      );
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        setState(() {
-          professorNames = data
-              .map((item) => item['professor_name'].toString())
-              .toList();
-        });
-      } else {
-        throw Exception('Failed to load professor names');
-      }
-    } catch (e) {
-      print('Error fetching professor names: $e');
-    }
-  }
-
-  Future<void> fetchRooms() async {
-    try {
-      final rooms = await ApiService.getRooms();
-      setState(() {
-        roomOptions = rooms;
-      });
-    } catch (e) {
-      print('Error fetching rooms: $e');
-    }
   }
 
   void _refreshTime() {
@@ -117,7 +186,8 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
         professorName: selectedProfessor!,
         roomNumber: selectedRoom!,
         attendanceStatus: attendanceStatus!,
-        subjectName: _subjectController.text,
+        subjectName: selectedSubject!,
+        scheduleTime: selectedTime!, // ⬅️ updated
       );
 
       if (success) {
@@ -179,7 +249,7 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
                 ),
                 const SizedBox(height: 20),
 
-                // ROOM
+                // ROOM DROPDOWN
                 DropdownButtonFormField<String>(
                   value: selectedRoom,
                   items: roomOptions.map((room) {
@@ -191,6 +261,20 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
                   onChanged: (value) {
                     setState(() {
                       selectedRoom = value;
+                      selectedProfessor = null;
+                      selectedSubject = null;
+                      selectedTime = null;
+
+                      final filtered = validSchedules
+                          .where((e) => e['room_number'] == value)
+                          .toList();
+
+                      professorNames = filtered
+                          .map((e) => e['professor_name'].toString())
+                          .toSet()
+                          .toList();
+                      subjectOptions = [];
+                      scheduleTimes = [];
                     });
                   },
                   decoration: const InputDecoration(
@@ -202,7 +286,7 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
                 ),
                 const SizedBox(height: 12),
 
-                // PROFESSOR
+                // PROFESSOR DROPDOWN
                 DropdownButtonFormField<String>(
                   value: selectedProfessor,
                   items: professorNames.map((name) {
@@ -214,10 +298,26 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
                   onChanged: (value) {
                     setState(() {
                       selectedProfessor = value;
+                      selectedSubject = null;
+                      selectedTime = null;
+
+                      final filtered = validSchedules
+                          .where(
+                            (e) =>
+                                e['room_number'] == selectedRoom &&
+                                e['professor_name'] == value,
+                          )
+                          .toList();
+
+                      subjectOptions = filtered
+                          .map((e) => e['subject_name'].toString())
+                          .toSet()
+                          .toList();
+                      scheduleTimes = [];
                     });
                   },
                   decoration: const InputDecoration(
-                    labelText: "Professor Name",
+                    labelText: "Professor",
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) =>
@@ -225,33 +325,69 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
                 ),
                 const SizedBox(height: 12),
 
-                // SUBJECT
-                TextFormField(
-                  controller: _subjectController,
+                // SUBJECT DROPDOWN
+                DropdownButtonFormField<String>(
+                  value: selectedSubject,
+                  items: subjectOptions.map((subject) {
+                    return DropdownMenuItem<String>(
+                      value: subject,
+                      child: Text(subject),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedSubject = value;
+                      selectedTime = null;
+
+                      final filtered = validSchedules
+                          .where(
+                            (e) =>
+                                e['room_number'] == selectedRoom &&
+                                e['professor_name'] == selectedProfessor &&
+                                e['subject_name'] == value,
+                          )
+                          .toList();
+
+                      scheduleTimes = filtered
+                          .map(
+                            (e) =>
+                                "${e['starting_time']} - ${e['ending_time']}",
+                          )
+                          .toSet()
+                          .toList();
+                    });
+                  },
                   decoration: const InputDecoration(
                     labelText: "Subject",
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) => value == null || value.isEmpty
-                      ? 'Please enter a subject'
-                      : null,
+                  validator: (value) =>
+                      value == null ? 'Please select a subject' : null,
                 ),
                 const SizedBox(height: 12),
 
-                // TIME
-                TextFormField(
-                  controller: scheduleTimeController,
+                // SCHEDULE TIME DROPDOWN
+                DropdownButtonFormField<String>(
+                  value: selectedTime,
+                  items: scheduleTimes.map((time) {
+                    return DropdownMenuItem<String>(
+                      value: time,
+                      child: Text(time),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedTime = value;
+                    });
+                  },
                   decoration: const InputDecoration(
                     labelText: "Schedule Time",
                     border: OutlineInputBorder(),
-                    hintText: "e.g. 1:00 PM - 2:00 PM",
                   ),
-                  validator: (value) => value == null || value.isEmpty
-                      ? 'Please enter schedule time'
-                      : null,
+                  validator: (value) =>
+                      value == null ? 'Please select a schedule time' : null,
                 ),
-
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 // DATE + TIME DISPLAY
                 Row(
@@ -284,10 +420,9 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 12),
 
-                // ATTENDANCE STATUS
+                // ATTENDANCE STATUS DROPDOWN
                 DropdownButtonFormField<String>(
                   value: attendanceStatus,
                   items: const [
@@ -307,9 +442,9 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
                   validator: (value) =>
                       value == null ? 'Please select a status' : null,
                 ),
-
                 const SizedBox(height: 20),
 
+                // SAVE BUTTON
                 ElevatedButton(
                   onPressed: _saveAttendance,
                   style: ElevatedButton.styleFrom(
