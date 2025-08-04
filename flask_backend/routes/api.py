@@ -317,31 +317,35 @@ def count_checkers():
 @api.route('/add_schedule', methods=['POST'])
 def add_schedule():
     data = request.get_json()
-    professor_name = data.get('professor_name')
-    room_number = data.get('room_number')
-    day = data.get('day')
-    starting_time = data.get('starting_time')
-    ending_time = data.get('ending_time')
-
-    if not all([professor_name, room_number, day, starting_time, ending_time]):
-        return jsonify({'error': 'Missing required fields'}), 400
-
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
-        cursor.execute("""
-            INSERT INTO Schedule_record (professor_name, room_number, day, starting_time, ending_time)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (professor_name, room_number, day, starting_time, ending_time))
+        query = """
+        INSERT INTO Schedule_record (professor_name, room_number, day, starting_time, ending_time, subject_name)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        values = (
+            data['professor_name'],
+            data['room_number'],
+            data['day'],
+            data['starting_time'],
+            data['ending_time'],
+            data['subject_name']
+        )
+
+        cursor.execute(query, values)
         conn.commit()
-        return jsonify({'message': 'Schedule added successfully'}), 201
+
+        return jsonify({'message': 'Schedule added'}), 201
     except Exception as e:
         conn.rollback()
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': str(e)}), 400
     finally:
         cursor.close()
         conn.close()
+
+
 
 @api.route('/delete_schedule/<int:schedule_id>', methods=['DELETE'])
 def delete_schedule(schedule_id):

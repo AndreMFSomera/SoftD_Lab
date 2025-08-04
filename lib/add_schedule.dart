@@ -20,6 +20,7 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
 
   final List<String> days = ['MWF', 'TTHS'];
   final List<String> rooms = ['S213', 'S218', 'S224', 'S242'];
+  final TextEditingController subjectController = TextEditingController();
 
   final List<Map<String, String>> timeSlots = [
     {'start': '07:30', 'end': '08:50'},
@@ -97,6 +98,7 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
       'day': selectedDay!,
       'starting_time': '$selectedStart:00',
       'ending_time': '$selectedEnd:00',
+      'subject_name': subjectController.text.trim(),
     };
 
     setState(() => _isLoading = true);
@@ -251,6 +253,13 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
                 decoration: themedInput('Ending Time'),
                 controller: TextEditingController(text: selectedEnd),
               ),
+              const SizedBox(height: 12), // 👈 insert starts here
+              TextFormField(
+                controller: subjectController,
+                decoration: themedInput('Subject Name'),
+              ),
+              const SizedBox(height: 20), // 👈 insert ends here
+
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
@@ -282,8 +291,9 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
                   child: ListTile(
                     title: Text('${item['professor_name']} - ${item['day']}'),
                     subtitle: Text(
-                      '${item['room_number']} | ${item['starting_time']} to ${item['ending_time']}',
+                      'Room: ${item['room_number']} | ${item['starting_time']} - ${item['ending_time']}\nSubject: ${item['subject_name']}',
                     ),
+
                     trailing: IconButton(
                       icon: const Icon(Icons.delete, color: Colors.red),
                       onPressed: () => deleteSchedule(item['id']),
