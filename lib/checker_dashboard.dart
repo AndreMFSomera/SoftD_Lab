@@ -17,6 +17,9 @@ String? selectedRoom;
 
 class _CheckerDashboardState extends State<CheckerDashboard> {
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _subjectController = TextEditingController();
+  final TextEditingController scheduleTimeController = TextEditingController();
+
   String? selectedProfessor;
   String? attendanceStatus;
   DateTime now = DateTime.now();
@@ -26,6 +29,12 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
   void initState() {
     super.initState();
     fetchProfessors();
+  }
+
+  @override
+  void dispose() {
+    _subjectController.dispose();
+    super.dispose();
   }
 
   Future<void> fetchProfessors() async {
@@ -55,7 +64,9 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
   }
 
   void _saveAttendance() async {
-    if (_formKey.currentState!.validate() && attendanceStatus != null) {
+    if (_formKey.currentState!.validate() &&
+        attendanceStatus != null &&
+        _subjectController.text.isNotEmpty) {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
@@ -91,15 +102,17 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
       final success = await ApiService.saveAttendance(
         recordedBy: checkerId,
         professorName: selectedProfessor!,
-        roomNumber: selectedRoom!, // ✅ use the dropdown value
+        roomNumber: selectedRoom!,
         attendanceStatus: attendanceStatus!,
+        subjectName: _subjectController.text,
       );
 
       if (success) {
         setState(() {
           selectedProfessor = null;
-          selectedRoom = null; // ✅ reset dropdown
+          selectedRoom = null;
           attendanceStatus = null;
+          _subjectController.clear();
         });
 
         ScaffoldMessenger.of(
@@ -153,6 +166,27 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
                 ),
                 const SizedBox(height: 20),
                 DropdownButtonFormField<String>(
+                  value: selectedRoom,
+                  items: roomOptions.map((room) {
+                    return DropdownMenuItem<String>(
+                      value: room,
+                      child: Text(room),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedRoom = value;
+                    });
+                  },
+                  decoration: const InputDecoration(
+                    labelText: "Room",
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) =>
+                      value == null ? 'Please select a room' : null,
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
                   value: selectedProfessor,
                   items: professorNames.map((name) {
                     return DropdownMenuItem<String>(
@@ -173,28 +207,33 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
                       value == null ? 'Please select a professor' : null,
                 ),
                 const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: selectedRoom,
-                  items: roomOptions.map((room) {
-                    return DropdownMenuItem<String>(
-                      value: room,
-                      child: Text(room),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      selectedRoom = value;
-                    });
-                  },
+                TextFormField(
+                  controller: _subjectController,
                   decoration: const InputDecoration(
-                    labelText: "Room",
+                    labelText: "Subject",
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) =>
-                      value == null ? 'Please select a room' : null,
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please enter a subject'
+                      : null,
                 ),
+                const SizedBox(height: 12),
 
                 const SizedBox(height: 12),
+                TextFormField(
+                  controller: scheduleTimeController,
+                  decoration: const InputDecoration(
+                    labelText: "Schedule Time",
+                    border: OutlineInputBorder(),
+                    hintText: "e.g. 1:00 PM - 2:00 PM",
+                  ),
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please enter schedule time'
+                      : null,
+                ),
+
+                const SizedBox(height: 16), // just spacing, no label
+
                 Row(
                   children: [
                     Expanded(
@@ -209,30 +248,23 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              readOnly: true,
-                              controller: TextEditingController(text: timeStr),
-                              decoration: const InputDecoration(
-                                labelText: "Time",
-                                border: OutlineInputBorder(),
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: _refreshTime,
-                            icon: const Icon(
-                              Icons.refresh,
-                              color: Colors.green,
-                            ),
-                          ),
-                        ],
+                      child: TextFormField(
+                        readOnly: true,
+                        controller: TextEditingController(text: timeStr),
+                        decoration: const InputDecoration(
+                          labelText: "Time",
+                          border: OutlineInputBorder(),
+                        ),
                       ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: _refreshTime,
+                      icon: const Icon(Icons.refresh, color: Colors.green),
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   value: attendanceStatus,
@@ -318,7 +350,6 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
           IconButton(icon: Icon(Icons.logout), onPressed: _confirmLogout),
         ],
       ),
-
       body: Container(
         width: double.infinity,
         alignment: Alignment.center,

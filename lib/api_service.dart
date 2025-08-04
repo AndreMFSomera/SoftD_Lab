@@ -158,20 +158,28 @@ class ApiService {
     required String recordedBy,
     required String professorName,
     required String roomNumber,
+    required String subjectName, // ✅ Add this line
     required String attendanceStatus,
   }) async {
+    final url = Uri.parse('$baseUrl/save_attendance');
     final response = await http.post(
-      Uri.parse('$baseUrl/save_attendance'),
+      url,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'recorded_by': recordedBy,
         'professor_name': professorName,
         'room_number': roomNumber,
+        'subject_name': subjectName, // ✅ Send to backend
         'attendance_status': attendanceStatus,
       }),
     );
 
-    return response.statusCode == 200;
+    if (response.statusCode == 201) {
+      return true;
+    } else {
+      print('Failed to save attendance: ${response.body}');
+      return false;
+    }
   }
 
   static Future<List<Map<String, dynamic>>> getAttendanceRecords() async {
