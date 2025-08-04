@@ -33,6 +33,7 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
     {'start': '15:30', 'end': '16:50'},
     {'start': '16:50', 'end': '18:10'},
     {'start': '18:10', 'end': '19:30'},
+    {'start': '00:00', 'end': '6:00'},
   ];
 
   List<String> instructorNames = [];

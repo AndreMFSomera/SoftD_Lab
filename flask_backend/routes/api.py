@@ -389,3 +389,20 @@ def get_schedules():
     finally:
         cursor.close()
         conn.close()
+
+
+
+@api.route('/get_rooms', methods=['GET'])
+def get_rooms():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        cursor.execute("SELECT DISTINCT room_number FROM Schedule_record")
+        rooms = [row['room_number'] for row in cursor.fetchall()]
+        return jsonify(rooms), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()

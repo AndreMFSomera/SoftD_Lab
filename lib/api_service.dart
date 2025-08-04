@@ -226,4 +226,15 @@ class ApiService {
       throw Exception('Failed to check name');
     }
   }
+
+  static Future<List<String>> getRooms() async {
+    final response = await http.get(Uri.parse('$baseUrl/get_rooms'));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((room) => room.toString()).toList();
+    } else {
+      throw Exception('Failed to load rooms');
+    }
+  }
 }

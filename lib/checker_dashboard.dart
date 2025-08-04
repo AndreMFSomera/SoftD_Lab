@@ -12,23 +12,25 @@ class CheckerDashboard extends StatefulWidget {
   State<CheckerDashboard> createState() => _CheckerDashboardState();
 }
 
-List<String> roomOptions = ['S213', 'S218', 'S242'];
-String? selectedRoom;
-
 class _CheckerDashboardState extends State<CheckerDashboard> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _subjectController = TextEditingController();
   final TextEditingController scheduleTimeController = TextEditingController();
 
   String? selectedProfessor;
+  String? selectedRoom;
   String? attendanceStatus;
-  DateTime now = DateTime.now();
+
   List<String> professorNames = [];
+  List<String> roomOptions = [];
+
+  DateTime now = DateTime.now();
 
   @override
   void initState() {
     super.initState();
     fetchProfessors();
+    fetchRooms();
   }
 
   @override
@@ -54,6 +56,17 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
       }
     } catch (e) {
       print('Error fetching professor names: $e');
+    }
+  }
+
+  Future<void> fetchRooms() async {
+    try {
+      final rooms = await ApiService.getRooms();
+      setState(() {
+        roomOptions = rooms;
+      });
+    } catch (e) {
+      print('Error fetching rooms: $e');
     }
   }
 
@@ -165,6 +178,8 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
                   ),
                 ),
                 const SizedBox(height: 20),
+
+                // ROOM
                 DropdownButtonFormField<String>(
                   value: selectedRoom,
                   items: roomOptions.map((room) {
@@ -186,6 +201,8 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
                       value == null ? 'Please select a room' : null,
                 ),
                 const SizedBox(height: 12),
+
+                // PROFESSOR
                 DropdownButtonFormField<String>(
                   value: selectedProfessor,
                   items: professorNames.map((name) {
@@ -207,6 +224,8 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
                       value == null ? 'Please select a professor' : null,
                 ),
                 const SizedBox(height: 12),
+
+                // SUBJECT
                 TextFormField(
                   controller: _subjectController,
                   decoration: const InputDecoration(
@@ -219,7 +238,7 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
                 ),
                 const SizedBox(height: 12),
 
-                const SizedBox(height: 12),
+                // TIME
                 TextFormField(
                   controller: scheduleTimeController,
                   decoration: const InputDecoration(
@@ -232,8 +251,9 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
                       : null,
                 ),
 
-                const SizedBox(height: 16), // just spacing, no label
+                const SizedBox(height: 16),
 
+                // DATE + TIME DISPLAY
                 Row(
                   children: [
                     Expanded(
@@ -266,6 +286,8 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
                 ),
 
                 const SizedBox(height: 12),
+
+                // ATTENDANCE STATUS
                 DropdownButtonFormField<String>(
                   value: attendanceStatus,
                   items: const [
@@ -285,7 +307,9 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
                   validator: (value) =>
                       value == null ? 'Please select a status' : null,
                 ),
+
                 const SizedBox(height: 20),
+
                 ElevatedButton(
                   onPressed: _saveAttendance,
                   style: ElevatedButton.styleFrom(
@@ -347,7 +371,7 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
           ),
         ),
         actions: [
-          IconButton(icon: Icon(Icons.logout), onPressed: _confirmLogout),
+          IconButton(icon: const Icon(Icons.logout), onPressed: _confirmLogout),
         ],
       ),
       body: Container(
