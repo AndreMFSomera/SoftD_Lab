@@ -64,20 +64,13 @@ class _ManagePageState extends State<ManagePage> {
         backgroundColor: Colors.green[700],
         title: const Text(
           "Attendance Records",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white, // Ensures title text is white
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.white,
-          ), // Set icon color to white
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
       ),
-
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _attendanceFuture,
         builder: (context, snapshot) {
@@ -110,37 +103,37 @@ class _ManagePageState extends State<ManagePage> {
                     columns: const [
                       DataColumn(
                         label: Text(
-                          "Name",
+                          "Professor",
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
                       DataColumn(
                         label: Text(
-                          "Room",
+                          "Subject",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          "Schedule",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          "Recorded By",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          "Recorded At",
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
                       DataColumn(
                         label: Text(
                           "Status",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      DataColumn(
-                        label: Text(
-                          "By",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      DataColumn(
-                        label: Text(
-                          "Date",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      DataColumn(
-                        label: Text(
-                          "Time",
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -155,11 +148,15 @@ class _ManagePageState extends State<ManagePage> {
                       return DataRow(
                         cells: [
                           DataCell(Text(record['professor_name'] ?? '')),
-                          DataCell(Text(record['room_number'] ?? '')),
-                          DataCell(Text(record['attendance_status'] ?? '')),
+                          DataCell(Text(record['subject_name'] ?? '')),
+                          DataCell(
+                            Text(
+                              "${record['starting_time'] ?? ''} - ${record['ending_time'] ?? ''}",
+                            ),
+                          ),
                           DataCell(Text(record['recorded_by'] ?? '')),
-                          DataCell(Text(record['date_recorded'] ?? '')),
-                          DataCell(Text(record['time_recorded'] ?? '')),
+                          DataCell(Text(record['recorded_at'] ?? '')),
+                          DataCell(Text(record['attendance_status'] ?? '')),
                           DataCell(
                             IconButton(
                               icon: const Icon(Icons.delete, color: Colors.red),

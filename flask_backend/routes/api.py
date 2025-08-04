@@ -231,9 +231,18 @@ def get_attendance_records():
         cursor = conn.cursor(dictionary=True)
 
         cursor.execute("""
-            SELECT id, recorded_by, professor_name, room_number, attendance_status,
-                   DATE_FORMAT(date_recorded, '%Y-%m-%d') AS date_recorded,
-                   TIME_FORMAT(time_recorded, '%H:%i:%s') AS time_recorded
+            SELECT 
+                id,
+                recorded_by,
+                professor_name,
+                room_number,
+                subject_name,
+                attendance_status,
+                DATE_FORMAT(date_recorded, '%Y-%m-%d') AS date_recorded,
+                TIME_FORMAT(time_recorded, '%H:%i:%s') AS time_recorded,
+                TIME_FORMAT(starting_time, '%H:%i') AS starting_time,
+                TIME_FORMAT(ending_time, '%H:%i') AS ending_time,
+                DATE_FORMAT(recorded_at, '%Y-%m-%d %H:%i:%s') AS recorded_at
             FROM attendance_records
             ORDER BY recorded_at DESC
         """)
