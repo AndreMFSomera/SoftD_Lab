@@ -5,6 +5,7 @@ import 'add_checker.dart';
 import 'api_service.dart';
 import 'manage_page.dart';
 import 'admin_login.dart';
+import 'add_schedule.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -25,6 +26,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     'Admin - Instructors',
     'Admin - Checkers',
     'Admin - Manage',
+    'Admin - Schedule', // <-- Add this
   ];
 
   @override
@@ -120,6 +122,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
         }
       });
     }
+    if (index == 4) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const AddSchedulePage()),
+      ).then((_) {
+        if (mounted) {
+          setState(() {
+            _selectedIndex = 0;
+          });
+        }
+      });
+    }
   }
 
   @override
@@ -162,6 +176,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 _buildNavItem(Icons.person, "Instructors", 1),
                 _buildNavItem(Icons.check, "Checkers", 2),
                 _buildNavItem(Icons.manage_accounts, "Manage", 3),
+                _buildNavItem(Icons.schedule, "Schedule", 4), // index 4
               ],
             ),
           ),

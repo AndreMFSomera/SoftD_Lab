@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 import mysql.connector
+from datetime import timedelta
 
 api = Blueprint('api', __name__)
 
@@ -313,3 +314,74 @@ def count_checkers():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@api.route('/add_schedule', methods=['POST'])
+def add_schedule():
+    data = request.get_json()
+    professor_name = data.get('professor_name')
+    room_number = data.get('room_number')
+    day = data.get('day')
+    starting_time = data.get('starting_time')
+    ending_time = data.get('ending_time')
+
+    if not all([professor_name, room_number, day, starting_time, ending_time]):
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            INSERT INTO Schedule_record (professor_name, room_number, day, starting_time, ending_time)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (professor_name, room_number, day, starting_time, ending_time))
+        conn.commit()
+        return jsonify({'message': 'Schedule added successfully'}), 201
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@api.route('/delete_schedule/<int:schedule_id>', methods=['DELETE'])
+def delete_schedule(schedule_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("DELETE FROM Schedule_record WHERE id = %s", (schedule_id,))
+        conn.commit()
+
+        if cursor.rowcount == 0:
+            return jsonify({'error': 'Schedule not found'}), 404
+
+        return jsonify({'message': 'Schedule deleted successfully'}), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@api.route('/get_schedules', methods=['GET'])
+def get_schedules():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        cursor.execute("SELECT * FROM Schedule_record")
+        schedules = cursor.fetchall()
+
+        # Convert timedelta fields to string
+        for schedule in schedules:
+            if isinstance(schedule['starting_time'], timedelta):
+                schedule['starting_time'] = str(schedule['starting_time'])[:-3]  # remove seconds
+            if isinstance(schedule['ending_time'], timedelta):
+                schedule['ending_time'] = str(schedule['ending_time'])[:-3]
+
+        return jsonify(schedules)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
