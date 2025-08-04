@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Faculty Login',
+      title: 'Checker Login',
       home: LoginPage(),
       debugShowCheckedModeBanner: false,
     );
@@ -45,7 +45,7 @@ class LoginPage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text(
-                        'Login to Your Faculty Account',
+                        'Login to Your Checker Account',
                         style: TextStyle(
                           fontSize: 50,
                           fontWeight: FontWeight.bold,
@@ -66,7 +66,7 @@ class LoginPage extends StatelessWidget {
                             _FacultyIdInputFormatter(),
                           ],
                           decoration: InputDecoration(
-                            hintText: 'Faculty ID Number (xx-xxxx-xxx)',
+                            hintText: 'Checker ID Number (xx-xxxx-xxx)',
                             contentPadding: const EdgeInsets.symmetric(
                               vertical: 15,
                               horizontal: 20,
@@ -119,7 +119,7 @@ class LoginPage extends StatelessWidget {
                                 builder: (context) => AlertDialog(
                                   title: const Text('Invalid ID Format'),
                                   content: const Text(
-                                    'Faculty ID must be in the format xx-xxxx-xxx.',
+                                    'Checker ID must be in the format xx-xxxx-xxx.',
                                   ),
                                   actions: [
                                     TextButton(

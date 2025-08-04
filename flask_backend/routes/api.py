@@ -129,9 +129,10 @@ def save_attendance():
     starting_time = data.get('starting_time')
     ending_time = data.get('ending_time')
     subject_name = data.get('subject_name')
+    day = data.get('day')  # ✅ NEW
 
     # ✅ Validate all required fields
-    if not all([recorded_by, professor_name, room_number, attendance_status, starting_time, ending_time, subject_name]):
+    if not all([recorded_by, professor_name, room_number, attendance_status, starting_time, ending_time, subject_name, day]):
         return jsonify({'error': 'Missing required fields'}), 400
 
     conn = get_db_connection()
@@ -141,10 +142,10 @@ def save_attendance():
         query = """
             INSERT INTO attendance_records (
                 recorded_by, professor_name, room_number, attendance_status,
-                starting_time, ending_time, subject_name
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                starting_time, ending_time, subject_name, day
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """
-        values = (recorded_by, professor_name, room_number, attendance_status, starting_time, ending_time, subject_name)
+        values = (recorded_by, professor_name, room_number, attendance_status, starting_time, ending_time, subject_name, day)
 
         cursor.execute(query, values)
         conn.commit()
@@ -156,6 +157,7 @@ def save_attendance():
     finally:
         cursor.close()
         conn.close()
+
 
 
 @api.route('/count_instructors', methods=['GET'])
@@ -226,34 +228,40 @@ def delete_checker(user_id):
 
 @api.route('/attendance_records', methods=['GET'])
 def get_attendance_records():
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
 
-        cursor.execute("""
-            SELECT 
-                id,
-                recorded_by,
-                professor_name,
-                room_number,
-                subject_name,
-                attendance_status,
-                DATE_FORMAT(date_recorded, '%Y-%m-%d') AS date_recorded,
-                TIME_FORMAT(time_recorded, '%H:%i:%s') AS time_recorded,
-                TIME_FORMAT(starting_time, '%H:%i') AS starting_time,
-                TIME_FORMAT(ending_time, '%H:%i') AS ending_time,
-                DATE_FORMAT(recorded_at, '%Y-%m-%d %H:%i:%s') AS recorded_at
+    try:
+        query = """
+            SELECT id, professor_name, subject_name, room_number, day,
+                   starting_time, ending_time, recorded_by, recorded_at, attendance_status
             FROM attendance_records
             ORDER BY recorded_at DESC
-        """)
+        """
+        cursor.execute(query)
         records = cursor.fetchall()
 
+        # Convert non-JSON serializable fields
+        from datetime import timedelta
+        for record in records:
+            if isinstance(record.get('starting_time'), timedelta):
+                record['starting_time'] = str(record['starting_time'])
+            if isinstance(record.get('ending_time'), timedelta):
+                record['ending_time'] = str(record['ending_time'])
+            if hasattr(record.get('recorded_at'), 'strftime'):
+                record['recorded_at'] = record['recorded_at'].strftime('%Y-%m-%d %H:%M:%S')
+
         return jsonify(records)
+
     except Exception as e:
+        print(f"Error fetching attendance: {e}")
         return jsonify({'error': str(e)}), 500
     finally:
         cursor.close()
         conn.close()
+
+
+
 
 @api.route('/attendance_records/<int:record_id>', methods=['DELETE'])
 def delete_attendance_record(record_id):

@@ -77,12 +77,11 @@ class _ManagePageState extends State<ManagePage> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(
+            return Center(
               child: Text(
-                "No attendance records found.",
-                style: TextStyle(fontSize: 16, color: Colors.black54),
+                "Error loading records:\n${snapshot.error}", // Show full error message
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 14, color: Colors.red),
               ),
             );
           }
@@ -110,6 +109,12 @@ class _ManagePageState extends State<ManagePage> {
                       DataColumn(
                         label: Text(
                           "Subject",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          "Room", // ✅ Added Room column
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -144,14 +149,18 @@ class _ManagePageState extends State<ManagePage> {
                         ),
                       ),
                     ],
+
                     rows: records.map((record) {
                       return DataRow(
                         cells: [
                           DataCell(Text(record['professor_name'] ?? '')),
                           DataCell(Text(record['subject_name'] ?? '')),
                           DataCell(
+                            Text(record['room_number'] ?? ''),
+                          ), // ✅ Added Room cell
+                          DataCell(
                             Text(
-                              "${record['starting_time'] ?? ''} - ${record['ending_time'] ?? ''}",
+                              "${record['day'] ?? ''} | ${record['starting_time'] ?? ''} - ${record['ending_time'] ?? ''}",
                             ),
                           ),
                           DataCell(Text(record['recorded_by'] ?? '')),

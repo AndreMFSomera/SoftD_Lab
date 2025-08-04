@@ -24,8 +24,7 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
 
   final List<Map<String, String>> timeSlots = [
     {'start': '07:30', 'end': '08:50'},
-    {'start': '08:50', 'end': '09:30'},
-    {'start': '09:30', 'end': '10:10'},
+    {'start': '08:50', 'end': '10:10'},
     {'start': '10:10', 'end': '11:30'},
     {'start': '11:30', 'end': '12:50'},
     {'start': '12:50', 'end': '14:10'},
@@ -34,6 +33,8 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
     {'start': '16:50', 'end': '18:10'},
     {'start': '18:10', 'end': '19:30'},
     {'start': '00:00', 'end': '6:00'},
+    {'start': '05:00', 'end': '6:00'},
+    {'start': '05:20', 'end': '6:00'},
   ];
 
   List<String> instructorNames = [];

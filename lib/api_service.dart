@@ -162,9 +162,27 @@ class ApiService {
     required String attendanceStatus,
     required String scheduleTime,
   }) async {
-    final times = scheduleTime.split('-'); // Split into start and end
+    final times = scheduleTime.split('-');
     final startingTime = times[0].trim();
     final endingTime = times[1].trim();
+
+    // ✅ Get day (MWF or TTHS)
+    final now = DateTime.now();
+    String dayCode;
+    switch (now.weekday) {
+      case DateTime.monday:
+      case DateTime.wednesday:
+      case DateTime.friday:
+        dayCode = 'MWF';
+        break;
+      case DateTime.tuesday:
+      case DateTime.thursday:
+      case DateTime.saturday:
+        dayCode = 'TTHS';
+        break;
+      default:
+        dayCode = '';
+    }
 
     final url = Uri.parse('$baseUrl/save_attendance');
     final response = await http.post(
@@ -176,8 +194,9 @@ class ApiService {
         'room_number': roomNumber,
         'subject_name': subjectName,
         'attendance_status': attendanceStatus,
-        'starting_time': startingTime, // ✅ changed
-        'ending_time': endingTime, // ✅ changed
+        'starting_time': startingTime,
+        'ending_time': endingTime,
+        'day': dayCode, // ✅ Send day to backend
       }),
     );
 
@@ -191,11 +210,14 @@ class ApiService {
 
   static Future<List<Map<String, dynamic>>> getAttendanceRecords() async {
     final response = await http.get(Uri.parse('$baseUrl/attendance_records'));
+    print('Response code: ${response.statusCode}');
+    print('Response body: ${response.body}'); // Debugging
+
     if (response.statusCode == 200) {
       final List<dynamic> jsonData = jsonDecode(response.body);
       return List<Map<String, dynamic>>.from(jsonData);
     } else {
-      throw Exception('Failed to load attendance records');
+      throw Exception('Error ${response.statusCode}: ${response.body}');
     }
   }
 
