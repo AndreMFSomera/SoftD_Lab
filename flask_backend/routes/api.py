@@ -122,31 +122,41 @@ def get_all_instructors():
 def save_attendance():
     data = request.get_json()
 
-    recorded_by = data.get('recorded_by')  # This is the id_number (string)
+    recorded_by = data.get('recorded_by')  # This is the checker's id_number
     professor_name = data.get('professor_name')
     room_number = data.get('room_number')
     attendance_status = data.get('attendance_status')
+    starting_time = data.get('starting_time')
+    ending_time = data.get('ending_time')
+    subject_name = data.get('subject_name')
 
-    if not all([recorded_by, professor_name, room_number, attendance_status]):
+    # ✅ Validate all required fields
+    if not all([recorded_by, professor_name, room_number, attendance_status, starting_time, ending_time, subject_name]):
         return jsonify({'error': 'Missing required fields'}), 400
 
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
-        cursor.execute("""
+        query = """
             INSERT INTO attendance_records (
-                recorded_by, professor_name, room_number, attendance_status
-            ) VALUES (%s, %s, %s, %s)
-        """, (recorded_by, professor_name, room_number, attendance_status))
+                recorded_by, professor_name, room_number, attendance_status,
+                starting_time, ending_time, subject_name
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """
+        values = (recorded_by, professor_name, room_number, attendance_status, starting_time, ending_time, subject_name)
 
+        cursor.execute(query, values)
         conn.commit()
-        return jsonify({'message': 'Attendance saved successfully'}), 200
+
+        return jsonify({'message': 'Attendance saved successfully'}), 201
     except Exception as e:
+        conn.rollback()
         return jsonify({'error': str(e)}), 500
     finally:
         cursor.close()
         conn.close()
+
 
 @api.route('/count_instructors', methods=['GET'])
 def count_instructors():

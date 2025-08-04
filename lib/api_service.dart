@@ -158,10 +158,14 @@ class ApiService {
     required String recordedBy,
     required String professorName,
     required String roomNumber,
-    required String subjectName, // ✅ Add this line
+    required String subjectName,
     required String attendanceStatus,
-    required String scheduleTime, // ⬅️ Add this
+    required String scheduleTime,
   }) async {
+    final times = scheduleTime.split('-'); // Split into start and end
+    final startingTime = times[0].trim();
+    final endingTime = times[1].trim();
+
     final url = Uri.parse('$baseUrl/save_attendance');
     final response = await http.post(
       url,
@@ -170,9 +174,10 @@ class ApiService {
         'recorded_by': recordedBy,
         'professor_name': professorName,
         'room_number': roomNumber,
-        'subject_name': subjectName, // ✅ Send to backend
+        'subject_name': subjectName,
         'attendance_status': attendanceStatus,
-        'schedule_time': scheduleTime, // ⬅️ Add this
+        'starting_time': startingTime, // ✅ changed
+        'ending_time': endingTime, // ✅ changed
       }),
     );
 

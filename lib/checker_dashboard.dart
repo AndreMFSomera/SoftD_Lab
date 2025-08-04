@@ -148,7 +148,8 @@ class _CheckerDashboardState extends State<CheckerDashboard> {
   void _saveAttendance() async {
     if (_formKey.currentState!.validate() &&
         attendanceStatus != null &&
-        _subjectController.text.isNotEmpty) {
+        selectedSubject != null &&
+        selectedTime != null) {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
