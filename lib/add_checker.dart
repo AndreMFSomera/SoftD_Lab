@@ -67,16 +67,10 @@ class _CheckerListPageState extends State<CheckerListPage> {
         backgroundColor: Colors.green[700],
         title: const Text(
           "Checkers List",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white, // 👈 AppBar title in white
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.white,
-          ), // 👈 Back button in white
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -131,12 +125,6 @@ class _CheckerListPageState extends State<CheckerListPage> {
                       ),
                       DataColumn(
                         label: Text(
-                          "Created At",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      DataColumn(
-                        label: Text(
                           "Action",
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
@@ -148,9 +136,6 @@ class _CheckerListPageState extends State<CheckerListPage> {
                           DataCell(Text(checker['full_name'] ?? '')),
                           DataCell(Text(checker['id_number'] ?? '')),
                           DataCell(Text(checker['role'] ?? '')),
-                          DataCell(
-                            Text(checker['created_at']?.split('T').first ?? ''),
-                          ),
                           DataCell(
                             IconButton(
                               icon: const Icon(Icons.delete, color: Colors.red),
