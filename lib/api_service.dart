@@ -2,7 +2,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.1.191:5000';
+  static const String baseUrl = 'http://192.168.1.7:5000';
 
   static Future<int> getCheckerCount() async {
     final response = await http.get(Uri.parse('$baseUrl/count_checkers'));
@@ -54,8 +54,8 @@ class ApiService {
             Uri.parse('$baseUrl/signup'),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({
-              'full_name': name, // ✅ matches backend
-              'id_number': id, // ✅ matches backend
+              'full_name': name, 
+              'id_number': id,  
               'password': password,
             }),
           )
@@ -196,7 +196,7 @@ class ApiService {
         'attendance_status': attendanceStatus,
         'starting_time': startingTime,
         'ending_time': endingTime,
-        'day': dayCode, // ✅ Send day to backend
+        'day': dayCode,
       }),
     );
 

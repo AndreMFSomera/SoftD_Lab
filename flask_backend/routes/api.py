@@ -9,7 +9,7 @@ def get_db_connection():
     return mysql.connector.connect(
         host='localhost',
         user='root',
-        password='160240',
+        password='',
         database='FacultyAttendanceDB'
     )
     
@@ -43,7 +43,6 @@ def signup():
     cursor = conn.cursor(dictionary=True)
 
     try:
-        # ✅ Only check ID uniqueness
         cursor.execute("SELECT * FROM users WHERE id_number = %s", (id_number,))
         existing_user = cursor.fetchone()
 
@@ -79,7 +78,7 @@ def add_instructor():
     cursor = conn.cursor(dictionary=True)
 
     try:
-        # Check if instructor with same name, id, or email already exists
+        
         cursor.execute("""
             SELECT * FROM instructors 
             WHERE professor_name = %s OR id_number = %s OR professor_email = %s
@@ -131,7 +130,6 @@ def save_attendance():
     subject_name = data.get('subject_name')
     day = data.get('day')  # ✅ NEW
 
-    # ✅ Validate all required fields
     if not all([recorded_by, professor_name, room_number, attendance_status, starting_time, ending_time, subject_name, day]):
         return jsonify({'error': 'Missing required fields'}), 400
 
@@ -541,7 +539,6 @@ def get_filtered_professors():
     professors = [row[0] for row in results]
     return jsonify({'professors': professors})
 
-# In your api.py
 @api.route('/get_subjects', methods=['GET'])
 def get_subjects():
     conn = get_db_connection()
